@@ -53,23 +53,32 @@ Filename: `YYYY-MM-DD-session-NN-brief-description.md`
 - Focus: Job, StatefulSets, Ingress, ConfigMaps, Secrets, PostgreSQL schema, Redis Streams
 - Status: ✓ Completed (Priority 4) - Phase 1 Complete!
 
+**Session 05 - Validation Preparation**
+- File: `2025-11-15-session-05-validation-prep.md`
+- Phase: 1 (K8s Foundation - Post-completion)
+- Focus: Commit cleanup, validation protocol, next session prep
+- Status: ✓ Completed
+
 ---
 
 ## Quick Resume
 
-**Latest session:** `2025-11-15-session-04-priority4-infrastructure.md`
+**Latest session:** `2025-11-15-session-05-validation-prep.md`
+
+**Before next session:**
+- Run manual validation: docs/PHASE1_VALIDATION.md
 
 **Next session should:**
+- Use resume prompt: docs/NEXT_SESSION_PROMPT.md
 - Start Phase 2: Backend Core
-- Implement POST /vote endpoint in FastAPI
-- Implement GET /results endpoint in FastAPI
+- Implement POST /vote and GET /results endpoints
 - Implement consumer Redis Stream processing
-- Add database operations
 
 **Reference:**
 ```
-Last session: @docs/sessions/2025-11-15-session-04-priority4-infrastructure.md
-Current todos: @Demo_project/todos.md
+Last session: @docs/sessions/2025-11-15-session-05-validation-prep.md
+Resume prompt: @docs/NEXT_SESSION_PROMPT.md
+Validation: @docs/PHASE1_VALIDATION.md
 
-Phase 1 complete! Ready for Phase 2.
+Phase 1 complete! Validate before Phase 2.
 ```
