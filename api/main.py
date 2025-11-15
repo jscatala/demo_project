@@ -31,13 +31,13 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     """Health check endpoint for liveness probe"""
     return {"status": "healthy"}
 
 
-@app.get("/ready")
+@app.api_route("/ready", methods=["GET", "HEAD"])
 async def ready():
     """Readiness check endpoint"""
     return {"status": "ready"}

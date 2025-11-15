@@ -79,19 +79,101 @@
 ### Priority 4: Remaining Infrastructure ✓
 - [x] Define K8s Job (consumer for event processing)
 - [x] Define StatefulSets (PostgreSQL, Redis) or external service configs
-- [x] Create Ingress with rate limiting annotations
+- [x] Create Gateway API resources (Gateway, HTTPRoute) with rate limiting (ADR-0005)
 - [x] Setup ConfigMaps and Secrets structure
 - [x] Design PostgreSQL schema (votes table: id, option, count, timestamp)
 - [x] Configure Redis Streams for event log
 
 ## Phase 2: Backend Core (High Priority)
-- [ ] FastAPI multistage Dockerfile (distroless/alpine base)
-- [ ] POST /vote endpoint → writes to Redis Stream (validate input: cats/dogs only)
-- [ ] GET /results endpoint → reads from PostgreSQL (prepared statements)
-- [ ] Security: Helmet headers, CORS, request size limits
-- [ ] Python consumer multistage Dockerfile
-- [ ] Consumer: Read Redis Stream → aggregate → PostgreSQL (prepared statements)
-- [ ] Consumer: K8s Job definition with restart policy
+
+**Critical Decision:** Consumer should be Deployment (continuous), not Job (batch) - Redis Streams require long-running process
+
+- [ ] FastAPI production Dockerfile with Python 3.13-slim multistage build
+  - [ ] Resolve base image: Use Python 3.13-slim (Alpine vs Debian - recommend slim for glibc compatibility)
+  - [ ] Create api/requirements.txt with pinned versions (FastAPI, uvicorn, redis, asyncpg, pydantic)
+  - [ ] Write Dockerfile stage 1: Builder (install deps, create wheels)
+  - [ ] Write Dockerfile stage 2: Runtime (copy wheels, minimal runtime deps, UID 1000)
+  - [ ] Add api/.dockerignore (exclude __pycache__, *.pyc, tests/, .git/)
+  - [ ] Build image locally: `docker build -t api:0.2.0 api/`
+  - [ ] Verify image size < 200MB: `docker images api:0.2.0`
+  - [ ] Verify runs as non-root: `docker run --rm api:0.2.0 id` shows UID 1000
+  - [ ] Test container starts: `docker run -p 8000:8000 api:0.2.0` responds on /health
+  - [ ] Update helm/values.yaml: api.image.tag: "0.2.0"
+
+- [ ] POST /api/vote endpoint with Redis Stream integration
+  - [ ] Define Pydantic model: `VoteRequest(option: Literal["cats", "dogs"])`
+  - [ ] Create Redis client singleton with connection pool (redis.asyncio)
+  - [ ] Implement POST /vote route handler with input validation
+  - [ ] Add XADD call to write vote to "votes" stream with fields: {vote, timestamp, request_id}
+  - [ ] Define error responses: 400 for invalid option, 503 for Redis unavailable
+  - [ ] Add structured logging (vote received, vote written, errors)
+  - [ ] Write unit test: valid vote "cats" returns 201
+  - [ ] Write unit test: invalid vote "birds" returns 400
+  - [ ] Write unit test: Redis connection failure returns 503
+  - [ ] Manual test: POST http://localhost:8000/vote with curl, verify XLEN increments
+
+- [ ] GET /api/results endpoint with PostgreSQL integration
+  - [ ] Add asyncpg dependency to api/requirements.txt
+  - [ ] Create PostgreSQL connection pool singleton (asyncpg.create_pool)
+  - [ ] Define Pydantic response model: `VoteResults(cats: int, dogs: int, total: int, cats_pct: float, dogs_pct: float)`
+  - [ ] Implement GET /results route handler calling `get_vote_results()` function
+  - [ ] Add error handling: 503 if DB unavailable, 500 on query failure
+  - [ ] Add response caching with 2-second TTL (simple dict cache with timestamp)
+  - [ ] Write unit test: mock DB returns counts, verify JSON structure
+  - [ ] Write unit test: empty database returns zeros
+  - [ ] Write integration test: Insert test votes, verify /results accuracy
+  - [ ] Manual test: GET http://localhost:8000/results, verify response <100ms
+
+- [ ] FastAPI security configuration (CORS, headers, request limits)
+  - [ ] Add fastapi-cors middleware with origin from env var (default: http://localhost:3000)
+  - [ ] Create security headers middleware (CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff)
+  - [ ] Add request body size limit middleware (1MB max via LimitUploadSize)
+  - [ ] Configure HSTS header (Strict-Transport-Security) for HTTPS enforcement
+  - [ ] Add X-Forwarded-For trusted proxy configuration
+  - [ ] Write test: Verify security headers in response
+  - [ ] Write test: CORS preflight request succeeds for allowed origin
+  - [ ] Write test: CORS rejects untrusted origin
+  - [ ] Write test: Request body >1MB rejected with 413
+  - [ ] Document security config in README: CORS_ORIGINS env var
+
+- [ ] Python consumer Dockerfile with Python 3.13-slim multistage build
+  - [ ] Create consumer/requirements.txt (redis, asyncpg, structlog)
+  - [ ] Write consumer/Dockerfile stage 1: Builder (pip install dependencies)
+  - [ ] Write consumer/Dockerfile stage 2: Runtime (Python 3.13-slim, UID 1000, copy code)
+  - [ ] Add consumer/.dockerignore
+  - [ ] Build image: `docker build -t consumer:0.2.0 consumer/`
+  - [ ] Verify image size <180MB
+  - [ ] Verify runs as UID 1000: `docker run --rm consumer:0.2.0 id`
+  - [ ] Test container executes consumer script: `docker run consumer:0.2.0`
+  - [ ] Update helm/values.yaml: consumer.image.tag: "0.2.0"
+
+- [ ] Consumer: Redis Stream processor with PostgreSQL aggregation
+  - [ ] Create consumer/consumer.py with Redis connection setup (redis.asyncio)
+  - [ ] Create PostgreSQL connection pool (asyncpg)
+  - [ ] Implement consumer group join: XGROUP CREATE with MKSTREAM if not exists
+  - [ ] Implement XREADGROUP loop: read "votes" stream, batch size 10, block 5s
+  - [ ] Parse message: extract vote field, validate "cats" or "dogs"
+  - [ ] Call PostgreSQL `increment_vote(option)` for each valid message
+  - [ ] XACK message after successful DB write
+  - [ ] Add error handling: log malformed messages, retry DB failures 3x
+  - [ ] Add SIGTERM signal handler for graceful shutdown
+  - [ ] Add structured logging (message received, DB updated, errors)
+  - [ ] Write unit test: Mock Redis, verify increment_vote called
+  - [ ] Write unit test: Malformed message logged and skipped
+  - [ ] Write integration test: Post vote via API, verify consumer increments DB
+
+- [ ] Consumer: K8s Deployment (changed from Job - continuous processing required)
+  - [ ] Create helm/templates/consumer/deployment.yaml
+  - [ ] Set namespace: voting-consumer
+  - [ ] Configure image: consumer:{{ .Values.consumer.image.tag }}
+  - [ ] Set restartPolicy: Always (continuous processing)
+  - [ ] Add env vars: DATABASE_URL, REDIS_URL from secrets
+  - [ ] Set resources: requests (256Mi/200m), limits (512Mi/500m)
+  - [ ] Set replicas: 1 (single consumer for consumer group)
+  - [ ] Add securityContext: runAsNonRoot, runAsUser: 1000
+  - [ ] Add liveness probe: TCP socket check (no HTTP endpoint for batch process)
+  - [ ] Validate: kubectl apply --dry-run=client -f deployment.yaml
+  - [ ] Update helm/values.yaml with consumer config
 
 ## Phase 3: Frontend (High Priority)
 - [ ] TypeScript app multistage Dockerfile (nginx serving static files)
@@ -133,35 +215,3 @@ Demo_project/
 ├── consumer/              # Python event consumer (K8s Job)
 └── infrastructure/        # Shared configs
 ```
-
-
----
-
-**TODO's added manually:**
-
-- Are we using the default ingress for k8s or using nginx ingress? what about deprecation of nginx ingress?
-- if we are using uvicon, oke spawn container is one pprocess? how we will scale the api horizontally? 
-- on the api, should the responses have the status code? @api/main.py 
-- what about this: 
-➜  ~ curl 0.0.0.0:8000/ready -I
-HTTP/1.1 405 Method Not Allowed
-date: Sat, 15 Nov 2025 21:25:41 GMT
-server: uvicorn
-allow: GET
-content-length: 31
-content-type: application/json
-
-➜  ~ curl -I 0.0.0.0:8000/health
-HTTP/1.1 405 Method Not Allowed
-date: Sat, 15 Nov 2025 21:25:52 GMT
-server: uvicorn
-allow: GET
-content-length: 31
-content-type: application/json
-
-➜  ~ curl 0.0.0.0:8000/health
-{"status":"healthy"}%                                                                 ➜  ~
-
-why do we get 405 in the api?
-
-- I want to update python to 3.13 slim, and have static typing to help better for later documentation and API references like swagger
