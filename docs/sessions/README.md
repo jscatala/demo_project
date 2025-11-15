@@ -41,19 +41,26 @@ Filename: `YYYY-MM-DD-session-NN-brief-description.md`
 - Focus: Validate namespaces, fix Dockerfile permissions, complete app stubs
 - Status: ✓ Completed (Priorities 1-2)
 
+**Session 03 - Phase 1 Priority 3 (Kubernetes Resources)**
+- File: `2025-11-15-session-03-priority3-k8s-resources.md`
+- Phase: 1 (K8s Foundation)
+- Focus: Validate Deployments and Helm chart, run helm lint/template
+- Status: ✓ Completed (Priority 3)
+
 ---
 
 ## Quick Resume
 
-**Latest session:** `2025-11-15-session-02-phase1-implementation.md`
+**Latest session:** `2025-11-15-session-03-priority3-k8s-resources.md`
 
 **Next session should:**
-- Continue Phase 1: Priority 3 (Kubernetes Resources)
-- Define frontend and API Deployments
-- Create Helm chart foundation (Chart.yaml, values.yaml, _helpers.tpl)
+- Continue Phase 1: Priority 4 (Remaining Infrastructure)
+- Define K8s Job for consumer
+- Define StatefulSets for PostgreSQL and Redis
+- Create Ingress with rate limiting
 
 **Reference:**
 ```
-Last session: @docs/sessions/2025-11-15-session-02-phase1-implementation.md
+Last session: @docs/sessions/2025-11-15-session-03-priority3-k8s-resources.md
 Current todos: @Demo_project/todos.md
 ```

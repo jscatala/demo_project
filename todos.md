@@ -50,31 +50,31 @@
   - [x] Build all 3 images locally with tags `frontend:0.1.0`, `api:0.1.0`, `consumer:0.1.0`
   - [x] Test: Run each container locally, verify hello-world response
 
-### Priority 3: Kubernetes Resources
-- [ ] Define frontend Deployment
-  - [ ] Create `helm/templates/frontend/deployment.yaml` with pod template
-  - [ ] Set replicas: 1, image: `frontend:0.1.0`, resources (128Mi/100m)
-  - [ ] Add liveness/readiness probes (httpGet: /health on port 80)
-  - [ ] Add environment variable `API_URL` placeholder
-  - [ ] Add labels matching voting-frontend namespace
-  - [ ] Validate: `kubectl apply --dry-run=client -f deployment.yaml`
+### Priority 3: Kubernetes Resources ✓
+- [x] Define frontend Deployment
+  - [x] Create `helm/templates/frontend/deployment.yaml` with pod template
+  - [x] Set replicas: 1, image: `frontend:0.1.0`, resources (128Mi/100m)
+  - [x] Add liveness/readiness probes (httpGet: /health on port 8080 for non-root)
+  - [x] Add environment variable `API_URL` placeholder
+  - [x] Add labels matching voting-frontend namespace
+  - [x] Validate: `kubectl apply --dry-run=client -f deployment.yaml`
 
-- [ ] Define API Deployment
-  - [ ] Create `helm/templates/api/deployment.yaml` with pod template
-  - [ ] Set replicas: 1, image: `api:0.1.0`, resources (256Mi/200m)
-  - [ ] Add liveness/readiness probes (httpGet: /health, /ready on port 8000)
-  - [ ] Add environment variables: `REDIS_URL`, `DATABASE_URL` (placeholders)
-  - [ ] Add securityContext: `runAsNonRoot: true`, `runAsUser: 1000`
-  - [ ] Add labels matching voting-api namespace
-  - [ ] Validate: `kubectl apply --dry-run=client -f deployment.yaml`
+- [x] Define API Deployment
+  - [x] Create `helm/templates/api/deployment.yaml` with pod template
+  - [x] Set replicas: 1, image: `api:0.1.0`, resources (256Mi/200m)
+  - [x] Add liveness/readiness probes (httpGet: /health, /ready on port 8000)
+  - [x] Add environment variables: `REDIS_URL`, `DATABASE_URL` (placeholders)
+  - [x] Add securityContext: `runAsNonRoot: true`, `runAsUser: 1000`
+  - [x] Add labels matching voting-api namespace
+  - [x] Validate: `kubectl apply --dry-run=client -f deployment.yaml`
 
-- [ ] Create Helm chart foundation
-  - [ ] Create `helm/Chart.yaml` with apiVersion: v2, name: voting-app, version: 0.1.0
-  - [ ] Create `helm/values.yaml` with image registry/tags for all services
-  - [ ] Create `helm/templates/_helpers.tpl` with common label templates
-  - [ ] Create `helm/templates/NOTES.txt` with installation success message
-  - [ ] Run `helm lint helm/` - must pass with 0 errors
-  - [ ] Run `helm template voting-test helm/` - must render without errors
+- [x] Create Helm chart foundation
+  - [x] Create `helm/Chart.yaml` with apiVersion: v2, name: voting-app, version: 0.1.0
+  - [x] Create `helm/values.yaml` with image registry/tags for all services
+  - [x] Create `helm/templates/_helpers.tpl` with common label templates
+  - [x] Create `helm/templates/NOTES.txt` with installation success message
+  - [x] Run `helm lint helm/` - must pass with 0 errors
+  - [x] Run `helm template voting-test helm/` - must render without errors
 
 ### Priority 4: Remaining Infrastructure
 - [ ] Define K8s Job (consumer for event processing)
