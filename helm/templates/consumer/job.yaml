@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: consumer
+  namespace: voting-consumer
+  labels:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: consumer
+    app.kubernetes.io/part-of: voting-system
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/version: "0.1.0"
+spec:
+  # Allow manual cleanup, keep pods for debugging
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: voting-app
+        app.kubernetes.io/component: consumer
+        app.kubernetes.io/part-of: voting-system
+        app.kubernetes.io/version: "0.1.0"
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: consumer
+        image: {{ .Values.images.consumer.repository }}:{{ .Values.images.consumer.tag }}
+        imagePullPolicy: {{ .Values.images.consumer.pullPolicy }}
+        env:
+        - name: REDIS_URL
+          value: {{ .Values.redis.url | quote }}
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: voting-secrets
+              key: database-url
+        resources:
+          requests:
+            memory: {{ .Values.consumer.resources.requests.memory | quote }}
+            cpu: {{ .Values.consumer.resources.requests.cpu | quote }}
+          limits:
+            memory: {{ .Values.consumer.resources.limits.memory | quote }}
+            cpu: {{ .Values.consumer.resources.limits.cpu | quote }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false

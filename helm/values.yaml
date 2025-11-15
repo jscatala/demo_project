@@ -55,3 +55,13 @@ redis:
 
 postgresql:
   url: "postgresql://postgres:postgres@postgres.voting-data.svc.cluster.local:5432/votes"
+
+# Secrets configuration
+# SECURITY: Set create: false in production and manage secrets externally
+secrets:
+  create: true  # Set to false to use external secret management
+  postgres:
+    user: "postgres"
+    password: "postgres"  # CHANGE IN PRODUCTION
+  redis:
+    password: ""  # Empty for no auth (development only)

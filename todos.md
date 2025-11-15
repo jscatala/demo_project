@@ -76,13 +76,13 @@
   - [x] Run `helm lint helm/` - must pass with 0 errors
   - [x] Run `helm template voting-test helm/` - must render without errors
 
-### Priority 4: Remaining Infrastructure
-- [ ] Define K8s Job (consumer for event processing)
-- [ ] Define StatefulSets (PostgreSQL, Redis) or external service configs
-- [ ] Create Ingress with rate limiting annotations
-- [ ] Setup ConfigMaps and Secrets structure
-- [ ] Design PostgreSQL schema (votes table: id, option, count, timestamp)
-- [ ] Configure Redis Streams for event log
+### Priority 4: Remaining Infrastructure ✓
+- [x] Define K8s Job (consumer for event processing)
+- [x] Define StatefulSets (PostgreSQL, Redis) or external service configs
+- [x] Create Ingress with rate limiting annotations
+- [x] Setup ConfigMaps and Secrets structure
+- [x] Design PostgreSQL schema (votes table: id, option, count, timestamp)
+- [x] Configure Redis Streams for event log
 
 ## Phase 2: Backend Core (High Priority)
 - [ ] FastAPI multistage Dockerfile (distroless/alpine base)

@@ -1,0 +1,98 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: voting-app
+  namespace: voting-frontend
+  labels:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: voting-system
+    app.kubernetes.io/managed-by: helm
+  annotations:
+    # NGINX Ingress Controller rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+
+    # Request size limits
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+
+    # CORS headers (restrict in production)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: voting.local  # Change for production
+    http:
+      paths:
+      # Frontend routes
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 8080
+
+      # API routes
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 8000
+---
+# Frontend Service (for Ingress)
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: voting-frontend
+  labels:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: voting-system
+    app.kubernetes.io/managed-by: helm
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: frontend
+---
+# API Service (for Ingress)
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: voting-api
+  labels:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: voting-system
+    app.kubernetes.io/managed-by: helm
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: api

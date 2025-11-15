@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: voting-data
+  labels:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: voting-system
+    app.kubernetes.io/managed-by: helm
+data:
+  redis.conf: |
+    # Redis configuration for Voting App
+    # Event-driven architecture using Redis Streams
+
+    # Persistence
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+
+    # Memory
+    maxmemory 200mb
+    maxmemory-policy allkeys-lru
+
+    # Network
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+
+    # Logging
+    loglevel notice
+
+    # Security
+    protected-mode yes
+    # Note: Authentication should be configured via requirepass in production
+
+    # Performance
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+
+    # Streams configuration (for event log)
+    # Stream name will be: votes
+    # Consumer group: vote-processors
+    # Trimming: Keep last 10000 entries to prevent unbounded growth
+    stream-node-max-bytes 4096
+    stream-node-max-entries 100
+
+  init-streams.sh: |
+    #!/bin/sh
+    # Initialize Redis Streams for voting events
+    # This script runs on startup to ensure stream structure exists
+
+    echo "Waiting for Redis to be ready..."
+    until redis-cli ping > /dev/null 2>&1; do
+      echo "Redis not ready, waiting..."
+      sleep 1
+    done
+
+    echo "Redis ready. Initializing streams..."
+
+    # Create vote events stream and consumer group if they don't exist
+    # XGROUP CREATE creates both stream and group in one command
+    # MKSTREAM creates stream if it doesn't exist
+    # $ means start consuming from new messages only
+
+    redis-cli XGROUP CREATE votes vote-processors $ MKSTREAM 2>/dev/null || {
+      echo "Stream 'votes' and consumer group 'vote-processors' already exist or error occurred"
+    }
+
+    # Verify stream exists
+    if redis-cli EXISTS votes | grep -q 1; then
+      echo "✓ Stream 'votes' verified"
+    else
+      echo "✗ Stream 'votes' not found"
+      exit 1
+    fi
+
+    # Verify consumer group exists
+    if redis-cli XINFO GROUPS votes 2>/dev/null | grep -q vote-processors; then
+      echo "✓ Consumer group 'vote-processors' verified"
+    else
+      echo "⚠ Consumer group 'vote-processors' not found, may need manual creation"
+    fi
+
+    echo "Redis Streams initialization complete"
+
+    # Add initial test message (optional, for debugging)
+    # redis-cli XADD votes '*' type init timestamp $(date +%s)
+
+    echo "Streams ready for vote events"
