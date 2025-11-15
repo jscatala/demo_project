@@ -133,3 +133,35 @@ Demo_project/
 ├── consumer/              # Python event consumer (K8s Job)
 └── infrastructure/        # Shared configs
 ```
+
+
+---
+
+**TODO's added manually:**
+
+- Are we using the default ingress for k8s or using nginx ingress? what about deprecation of nginx ingress?
+- if we are using uvicon, oke spawn container is one pprocess? how we will scale the api horizontally? 
+- on the api, should the responses have the status code? @api/main.py 
+- what about this: 
+➜  ~ curl 0.0.0.0:8000/ready -I
+HTTP/1.1 405 Method Not Allowed
+date: Sat, 15 Nov 2025 21:25:41 GMT
+server: uvicorn
+allow: GET
+content-length: 31
+content-type: application/json
+
+➜  ~ curl -I 0.0.0.0:8000/health
+HTTP/1.1 405 Method Not Allowed
+date: Sat, 15 Nov 2025 21:25:52 GMT
+server: uvicorn
+allow: GET
+content-length: 31
+content-type: application/json
+
+➜  ~ curl 0.0.0.0:8000/health
+{"status":"healthy"}%                                                                 ➜  ~
+
+why do we get 405 in the api?
+
+- I want to update python to 3.13 slim, and have static typing to help better for later documentation and API references like swagger

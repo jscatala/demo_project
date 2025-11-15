@@ -39,6 +39,18 @@ Each issue follows the template in `template.md`:
 - Solution: Copy dependencies to user's home directory with proper ownership
 - Status: ✓ Resolved
 
+**Issue 0003 - Helm Namespace Ownership Conflict**
+- File: `0003-helm-namespace-ownership-conflict.md`
+- Problem: Helm install fails when namespaces pre-created manually (missing ownership metadata)
+- Solution: Delete manually created namespaces before Helm install, let Helm manage all resources
+- Status: ✓ Resolved
+
+**Issue 0004 - Minikube Local Image Loading Requirement**
+- File: `0004-minikube-local-image-loading.md`
+- Problem: Locally-built Docker images not available to Minikube's isolated daemon (ImagePullBackOff)
+- Solution: Use `minikube image load` to transfer images from host to Minikube daemon
+- Status: ✓ Resolved
+
 ---
 
 ## How to Use
@@ -56,7 +68,7 @@ Each issue follows the template in `template.md`:
 
 ## Quick Reference
 
-**Latest issue:** `0002-dockerfile-nonroot-permissions.md`
+**Latest issue:** `0004-minikube-local-image-loading.md`
 
 **Common problem categories:**
 - Security

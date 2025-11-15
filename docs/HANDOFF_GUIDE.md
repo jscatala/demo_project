@@ -35,8 +35,8 @@ Reference these files using `@` syntax to provide context:
 
 ### 1. Resume Context
 ```
-Last session: @docs/sessions/2025-11-15-session-01-project-planning.md
-Next task: Starting Phase 1 - Helm chart structure
+Last session: @docs/sessions/2025-11-15-session-05-validation-prep.md
+Next task: Starting Phase 2
 ```
 
 ### 2. Work on Tasks
