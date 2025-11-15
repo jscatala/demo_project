@@ -33,6 +33,12 @@ Each issue follows the template in `template.md`:
 - Solution: Layer-based namespaces with network policies
 - Status: ✓ Resolved (see ADR-0004)
 
+**Issue 0002 - Dockerfile Non-Root User Permissions**
+- File: `0002-dockerfile-nonroot-permissions.md`
+- Problem: Permission denied errors when non-root container tried to access root-owned dependencies
+- Solution: Copy dependencies to user's home directory with proper ownership
+- Status: ✓ Resolved
+
 ---
 
 ## How to Use
@@ -50,7 +56,7 @@ Each issue follows the template in `template.md`:
 
 ## Quick Reference
 
-**Latest issue:** `0001-namespace-security-isolation.md`
+**Latest issue:** `0002-dockerfile-nonroot-permissions.md`
 
 **Common problem categories:**
 - Security

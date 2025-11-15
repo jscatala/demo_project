@@ -32,23 +32,23 @@
 
 **Note:** Tasks reorganized by execution order after atomization analysis. Priority 1 tasks are infrastructure-only, Priority 2 creates minimal app stubs, Priority 3 connects them.
 
-### Priority 1: Namespace Infrastructure
-- [ ] Define 4 namespace manifests
-  - [ ] Create `helm/templates/namespaces/voting-frontend.yaml` with metadata
-  - [ ] Create `helm/templates/namespaces/voting-api.yaml` with metadata
-  - [ ] Create `helm/templates/namespaces/voting-consumer.yaml` with metadata
-  - [ ] Create `helm/templates/namespaces/voting-data.yaml` with metadata
-  - [ ] Add standard K8s labels (app.kubernetes.io/name, component, managed-by)
-  - [ ] Test: `kubectl apply -f helm/templates/namespaces/` succeeds
-  - [ ] Verify: `kubectl get ns | grep voting` shows exactly 4 namespaces
+### Priority 1: Namespace Infrastructure ✓
+- [x] Define 4 namespace manifests
+  - [x] Create `helm/templates/namespaces/voting-frontend.yaml` with metadata
+  - [x] Create `helm/templates/namespaces/voting-api.yaml` with metadata
+  - [x] Create `helm/templates/namespaces/voting-consumer.yaml` with metadata
+  - [x] Create `helm/templates/namespaces/voting-data.yaml` with metadata
+  - [x] Add standard K8s labels (app.kubernetes.io/name, component, managed-by)
+  - [x] Test: `kubectl apply -f helm/templates/namespaces/` succeeds
+  - [x] Verify: `kubectl get ns | grep voting` shows exactly 4 namespaces
 
-### Priority 2: Minimal Application Stubs
-- [ ] Create minimal application stubs (enables Deployment testing)
-  - [ ] Create `frontend/` with Dockerfile + React hello-world app
-  - [ ] Create `api/` with Dockerfile + FastAPI hello-world app
-  - [ ] Create `consumer/` with Dockerfile + Python hello-world script
-  - [ ] Build all 3 images locally with tags `frontend:0.1.0`, `api:0.1.0`, `consumer:0.1.0`
-  - [ ] Test: Run each container locally, verify hello-world response
+### Priority 2: Minimal Application Stubs ✓
+- [x] Create minimal application stubs (enables Deployment testing)
+  - [x] Create `frontend/` with Dockerfile + React hello-world app
+  - [x] Create `api/` with Dockerfile + FastAPI hello-world app
+  - [x] Create `consumer/` with Dockerfile + Python hello-world script
+  - [x] Build all 3 images locally with tags `frontend:0.1.0`, `api:0.1.0`, `consumer:0.1.0`
+  - [x] Test: Run each container locally, verify hello-world response
 
 ### Priority 3: Kubernetes Resources
 - [ ] Define frontend Deployment

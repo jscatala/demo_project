@@ -12,18 +12,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Create non-root user first
+RUN useradd -m -u 1000 appuser
+
+# Copy dependencies from builder to appuser's home
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
 # Copy application code
-COPY main.py .
+COPY --chown=appuser:appuser main.py .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-
-# Update PATH
-ENV PATH=/root/.local/bin:$PATH
+# Update PATH to use appuser's local bin
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Switch to non-root user
 USER 1000
