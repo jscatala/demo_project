@@ -59,26 +59,37 @@ Filename: `YYYY-MM-DD-session-NN-brief-description.md`
 - Focus: Commit cleanup, validation protocol, next session prep
 - Status: ✓ Completed
 
+**Session 06 - Phase 2 API Dockerfile & Distroless Migration**
+- File: `2025-11-15-session-06-phase2-dockerfile.md`
+- Phase: 2 (Backend Core)
+- Focus: Manual TODO resolution, Gateway API decision (ADR-0005), distroless + uv migration
+- Key achievements: Image size 274MB → 166MB (39% reduction), HEAD method fix, tech-to-review.md
+- Status: ✓ Completed (Phase 2.1)
+
 ---
 
 ## Quick Resume
 
-**Latest session:** `2025-11-15-session-05-validation-prep.md`
+**Latest session:** `2025-11-15-session-06-phase2-dockerfile.md`
 
-**Before next session:**
-- Run manual validation: docs/PHASE1_VALIDATION.md
+**Completed today:**
+- Resolved all manual TODOs blocking Phase 2
+- Created ADR-0005 (Gateway API with Envoy Gateway)
+- Phase 2.1 complete: distroless + uv production Dockerfile
+- Image optimization: 274MB → 166MB (39% reduction)
 
 **Next session should:**
-- Use resume prompt: docs/NEXT_SESSION_PROMPT.md
-- Start Phase 2: Backend Core
-- Implement POST /vote and GET /results endpoints
-- Implement consumer Redis Stream processing
+- Start Phase 2.2: POST /vote endpoint with Redis Stream integration
+- Implement Pydantic validation for vote options
+- Add structured logging
+- Write unit tests
 
 **Reference:**
 ```
-Last session: @docs/sessions/2025-11-15-session-05-validation-prep.md
-Resume prompt: @docs/NEXT_SESSION_PROMPT.md
-Validation: @docs/PHASE1_VALIDATION.md
+Last session: @docs/sessions/2025-11-15-session-06-phase2-dockerfile.md
+Current todos: @Demo_project/todos.md
+Gateway API decision: @docs/adr/0005-gateway-api-ingress.md
+Tech references: @docs/tech-to-review.md
 
-Phase 1 complete! Validate before Phase 2.
+Phase 2.1 complete! Ready for POST /vote endpoint.
 ```

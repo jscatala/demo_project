@@ -88,17 +88,19 @@
 
 **Critical Decision:** Consumer should be Deployment (continuous), not Job (batch) - Redis Streams require long-running process
 
-- [ ] FastAPI production Dockerfile with Python 3.13-slim multistage build
-  - [ ] Resolve base image: Use Python 3.13-slim (Alpine vs Debian - recommend slim for glibc compatibility)
-  - [ ] Create api/requirements.txt with pinned versions (FastAPI, uvicorn, redis, asyncpg, pydantic)
-  - [ ] Write Dockerfile stage 1: Builder (install deps, create wheels)
-  - [ ] Write Dockerfile stage 2: Runtime (copy wheels, minimal runtime deps, UID 1000)
-  - [ ] Add api/.dockerignore (exclude __pycache__, *.pyc, tests/, .git/)
-  - [ ] Build image locally: `docker build -t api:0.2.0 api/`
-  - [ ] Verify image size < 200MB: `docker images api:0.2.0`
-  - [ ] Verify runs as non-root: `docker run --rm api:0.2.0 id` shows UID 1000
-  - [ ] Test container starts: `docker run -p 8000:8000 api:0.2.0` responds on /health
-  - [ ] Update helm/values.yaml: api.image.tag: "0.2.0"
+- [x] FastAPI production Dockerfile with distroless + uv (completed 2025-11-15)
+  - [x] Replaced pip with uv package manager (5-10x faster)
+  - [x] Switched to Google distroless Python 3.11 base image
+  - [x] Create api/requirements.txt with pinned versions (FastAPI, uvicorn, redis, asyncpg, pydantic)
+  - [x] Write Dockerfile stage 1: Builder (Python 3.11-slim + uv, install deps)
+  - [x] Write Dockerfile stage 2: Runtime (distroless, minimal deps, UID 65532)
+  - [x] Add api/.dockerignore (exclude __pycache__, *.pyc, tests/, .git/)
+  - [x] Build image locally: `docker build -t api:0.2.1 api/`
+  - [x] Verify image size: 166MB (39% reduction from 274MB)
+  - [x] Verify runs as non-root: distroless runs as UID 65532 by default
+  - [x] Test container starts: `docker run -p 8000:8000 api:0.2.1` responds on /health
+  - [x] Update helm/values.yaml: api.image.tag: "0.2.1"
+  - [x] Fix HEAD method support on /health and /ready endpoints
 
 - [ ] POST /api/vote endpoint with Redis Stream integration
   - [ ] Define Pydantic model: `VoteRequest(option: Literal["cats", "dogs"])`
