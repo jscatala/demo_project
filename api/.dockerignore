@@ -1,14 +1,36 @@
+# Python artifacts
 __pycache__
 *.pyc
 *.pyo
 *.pyd
 .Python
 *.so
+
+# Virtual environments
 .env
 .venv
 venv/
+env/
+
+# Git
 .git
 .gitignore
+
+# Documentation
 README.md
+*.md
+
+# OS files
 .DS_Store
+
+# Logs
 *.log
+
+# Tests
+tests/
+.pytest_cache
+.coverage
+
+# Docker
+Dockerfile
+.dockerignore

@@ -9,7 +9,7 @@ images:
 
   api:
     repository: api
-    tag: "0.1.0"
+    tag: "0.2.1"
     pullPolicy: IfNotPresent
 
   consumer:
