@@ -1,0 +1,13 @@
+apiVersion: v2
+name: voting-app
+description: Event-driven voting application (Cats vs Dogs)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - voting
+  - event-driven
+  - microservices
+maintainers:
+  - name: Juan Catalan
+    email: el_seba_soy@hotmail.com

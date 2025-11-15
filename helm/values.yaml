@@ -1,0 +1,57 @@
+# Default values for voting-app
+
+# Image configuration
+images:
+  frontend:
+    repository: frontend
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+
+  api:
+    repository: api
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+
+  consumer:
+    repository: consumer
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+
+# Frontend configuration
+frontend:
+  replicas: 1
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# API configuration
+api:
+  replicas: 1
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Consumer configuration
+consumer:
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Database configuration (placeholders)
+redis:
+  url: "redis://redis.voting-data.svc.cluster.local:6379"
+
+postgresql:
+  url: "postgresql://postgres:postgres@postgres.voting-data.svc.cluster.local:5432/votes"

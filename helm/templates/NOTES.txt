@@ -1,0 +1,31 @@
+Thank you for installing {{ .Chart.Name }} version {{ .Chart.Version }}!
+
+Your voting application has been deployed successfully.
+
+Components deployed:
+  ✓ Frontend (voting-frontend namespace)
+  ✓ API (voting-api namespace)
+  ✓ Namespaces created
+
+To access the application:
+
+1. Check deployment status:
+   kubectl get pods -n voting-frontend
+   kubectl get pods -n voting-api
+
+2. Port forward to access locally:
+   kubectl port-forward -n voting-frontend svc/frontend 8080:80
+
+   Then visit: http://localhost:8080
+
+3. Check API health:
+   kubectl port-forward -n voting-api svc/api 8000:8000
+
+   Then visit: http://localhost:8000/health
+
+Next steps:
+  - Deploy Redis and PostgreSQL (voting-data namespace)
+  - Deploy consumer service
+  - Configure Ingress for external access
+
+For more information, visit: https://github.com/jscatala/demo_project
