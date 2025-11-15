@@ -1,0 +1,16 @@
+Main objective:
+
+have a voting website when loaded, you can see two things: 
+
+first top half will be the result of the voting with the number and percentaje 
+second half, the voting buttons with each label of the alternative, all side to side
+
+Stack:
+All of this will be with event driven architecture, and using containers and microservices. All should be dockerized. I want to have three layers: Front end in typescript, api build with fast api, and a backend written in python. Also to make it with a good performance approach, when the user votes, that vote will be temporarly stored in a redis database. When the event gets in, a python lambda will consume the event and add the result into a postgres database
+
+Deployment:
+The deployment will be on a kubernetes environment, the techstack used will be: Kubernetes, for deployment, argo CD for orchestation, argo workflows to do the ci/cd, helm to have the definition for all the environment. For now lets assume we are in a develpment environment. All of this will using git. 
+
+
+#Assumption:
+this project since it is a demo project, will be run on localhost, but we can use any available tool to plan and deploy to mimic a real environment. To that, we will use minikube with a particular profile for this project. Also we can use a gitea to have a git server in our local and over there connect git hooks
