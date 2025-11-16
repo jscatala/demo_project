@@ -10,7 +10,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from redis_client import init_redis, close_redis
+from db_client import init_db, close_db
 from routes.vote import router as vote_router
+from routes.results import router as results_router
 
 # Configure logging
 logging.basicConfig(
@@ -23,15 +25,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan context manager.
 
-    Handles startup and shutdown events for Redis connection.
+    Handles startup and shutdown events for Redis and PostgreSQL connections.
     """
     # Startup
     logger.info("Starting Voting API")
     try:
         await init_redis()
         logger.info("Redis initialized successfully")
+
+        await init_db()
+        logger.info("PostgreSQL initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize Redis: {e}")
+        logger.error(f"Failed to initialize services: {e}")
         raise
 
     yield
@@ -39,11 +44,12 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Voting API")
     await close_redis()
+    await close_db()
 
 
 app = FastAPI(
     title="Voting API",
-    version="0.3.0",
+    version="0.3.1",
     description="API for Cats vs Dogs voting system",
     lifespan=lifespan,
 )
@@ -60,14 +66,15 @@ app.add_middleware(
 
 # Include routers
 app.include_router(vote_router)
+app.include_router(results_router)
 
 
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
-        "message": "Voting API - Hello World",
-        "version": "0.1.0",
+        "message": "Voting API - Cats vs Dogs",
+        "version": "0.3.1",
         "status": "running"
     }
 

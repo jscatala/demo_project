@@ -24,7 +24,7 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /home/nonroot/.local/lib/python3.11/site-packages
 
 # Copy application code
-COPY main.py models.py redis_client.py ./
+COPY main.py models.py redis_client.py db_client.py ./
 COPY routes/ routes/
 COPY services/ services/
 

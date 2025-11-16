@@ -1,4 +1,5 @@
 """Pydantic models for API requests and responses."""
+from datetime import datetime
 from typing import Literal
 from pydantic import BaseModel, Field
 
@@ -30,3 +31,37 @@ class VoteResponse(BaseModel):
     message: str
     option: str
     stream_id: str
+
+
+class VoteOption(BaseModel):
+    """Individual vote option result.
+
+    Attributes:
+        option: The vote option (cats or dogs)
+        count: Number of votes for this option
+        percentage: Percentage of total votes (0-100)
+    """
+
+    option: Literal["cats", "dogs"]
+    count: int
+    percentage: float = Field(..., ge=0, le=100)
+
+
+class VoteResults(BaseModel):
+    """Response model for vote results endpoint.
+
+    Attributes:
+        cats: Vote count for cats
+        dogs: Vote count for dogs
+        total: Total number of votes
+        cats_percentage: Percentage for cats (0-100)
+        dogs_percentage: Percentage for dogs (0-100)
+        last_updated: Timestamp of last vote update
+    """
+
+    cats: int = Field(..., ge=0)
+    dogs: int = Field(..., ge=0)
+    total: int = Field(..., ge=0)
+    cats_percentage: float = Field(..., ge=0, le=100)
+    dogs_percentage: float = Field(..., ge=0, le=100)
+    last_updated: datetime
