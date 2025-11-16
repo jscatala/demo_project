@@ -57,6 +57,46 @@ Reference links and resources for technologies used in the project.
 
 ---
 
+## Kubernetes securityContext
+
+**What:** Security settings for Pods and containers defining privilege and access control. Controls user/group IDs, Linux capabilities, filesystem permissions, and privilege escalation.
+
+**Why:** Essential for production security - enforces least privilege principle, prevents container breakout attacks, ensures non-root execution, and limits attack surface.
+
+**Status:** In use (Phase 1+)
+
+**Resources:**
+- Official docs: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+- Security best practices: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+- Pod Security Admission: https://kubernetes.io/docs/concepts/security/pod-security-admission/
+- Linux capabilities reference: https://man7.org/linux/man-pages/man7/capabilities.7.html
+- OWASP Kubernetes Security: https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html
+
+**Key concepts to review:**
+- **runAsNonRoot:** Prevents containers from running as root (UID 0)
+- **runAsUser/runAsGroup:** Specifies UID/GID for container process
+- **fsGroup:** Sets owning GID for mounted volumes
+- **allowPrivilegeEscalation:** Blocks setuid binaries and privilege escalation
+- **capabilities:** Controls Linux capabilities (drop ALL, add only what's needed)
+- **readOnlyRootFilesystem:** Makes container filesystem read-only
+- **seccompProfile:** Restricts syscalls container can make
+- **seLinuxOptions:** SELinux context for the container
+
+**Current usage in project:**
+- Pod-level: `runAsNonRoot: true`, `runAsUser: 1000`, `fsGroup: 1000`
+- Container-level: `allowPrivilegeEscalation: false`, `capabilities: {drop: [ALL]}`
+- API (distroless): Runs as UID 65532 (nonroot user)
+- Consumer: Runs as UID 1000 (appuser)
+- All containers: Non-root, no privilege escalation, all capabilities dropped
+
+**Security impact:**
+- Prevents privilege escalation attacks
+- Limits damage from container compromise
+- Enforces defense in depth
+- Meets Pod Security Standards (Restricted level)
+
+---
+
 ## Template for New Technologies
 
 ```markdown
