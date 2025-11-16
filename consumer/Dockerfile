@@ -1,31 +1,31 @@
 # Build stage
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-# Install dependencies (empty for now, but prepared for future)
+# Install dependencies
 COPY requirements.txt .
-# RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Production stage
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
-# Create non-root user first
+# Create non-root user
 RUN useradd -m -u 1000 appuser
 
-# Copy dependencies from builder (if any)
-# COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+# Copy dependencies from builder
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
 # Copy application code
-COPY --chown=appuser:appuser main.py .
+COPY --chown=appuser:appuser *.py .
 
-# Update PATH to use appuser's local bin
+# Update PATH to include user packages
 ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Switch to non-root user
 USER 1000
 
-# Run application
+# Run consumer
 CMD ["python", "main.py"]
