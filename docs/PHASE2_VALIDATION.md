@@ -52,6 +52,8 @@ ls -l consumer/*.py
 
 ### 2. API Container Validation
 
+**Important:** API requires Redis and PostgreSQL to start successfully. Most tests in this section (2.2 onwards) require these services running. Section 2.1 can be tested without dependencies to verify basic container functionality.
+
 **2.1 Test API Container Startup**
 
 **Note:** API will attempt to connect to Redis/PostgreSQL on startup. Without these services running, connection errors are expected but can be ignored for basic validation. The important checks are: no import errors and Uvicorn starts.
@@ -80,17 +82,34 @@ docker logs api-test
 docker stop api-test
 ```
 
-- [ ] API container starts without errors
-- [ ] Uvicorn starts on port 8000
-- [ ] No import errors
-- [ ] Application startup complete
-- [ ] Connection errors to Redis/DB expected (can be ignored)
+- [X] API container starts without errors
+- [X] Uvicorn starts on port 8000
+- [X] No import errors
+- [X] Application startup complete
+- [X] Connection errors to Redis/DB expected (can be ignored)
 
 **2.2 Test API Health Endpoints**
 
+**Note:** API requires Redis and PostgreSQL to start. Run these services first:
+
 ```bash
-# Start API
-docker run --rm -d --name api-test -p 8000:8000 api:0.3.2
+# Start Redis and PostgreSQL (if not already running)
+docker run -d --name redis-test -p 6379:6379 redis:7-alpine
+docker run -d --name postgres-test -p 5432:5432 \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=votes \
+  postgres:15-alpine
+
+# Wait for services
+sleep 3
+
+# Start API with connections
+docker run --rm -d --name api-test -p 8000:8000 \
+  -e REDIS_URL="redis://host.docker.internal:6379" \
+  -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/votes" \
+  api:0.3.2
+
+# Wait for API startup
 sleep 3
 
 # Test health endpoint
@@ -103,8 +122,9 @@ curl -I http://localhost:8000/ready
 
 # Expected: HTTP/1.1 200 OK
 
-# Stop container
-docker stop api-test
+# Stop containers
+docker stop api-test redis-test postgres-test
+docker rm redis-test postgres-test
 ```
 
 - [ ] /health endpoint returns 200 OK
@@ -113,11 +133,17 @@ docker stop api-test
 
 **2.3 Test API Security Headers**
 
+**Note:** Assumes Redis/PostgreSQL still running from section 2.2. If not, start them first.
+
 ```bash
-# Start API
+# Start API with CORS configuration
 docker run --rm -d --name api-test -p 8000:8000 \
+  -e REDIS_URL="redis://host.docker.internal:6379" \
+  -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/votes" \
   -e CORS_ORIGINS="http://localhost:3000" \
   api:0.3.2
+
+# Wait for startup
 sleep 3
 
 # Check security headers
@@ -130,7 +156,7 @@ curl -I http://localhost:8000/health
 # x-xss-protection: 1; mode=block
 # referrer-policy: strict-origin-when-cross-origin
 
-# Stop container
+# Stop API
 docker stop api-test
 ```
 
