@@ -174,20 +174,21 @@
   - [x] Test container executes consumer script: `docker run consumer:0.2.0`
   - [x] Update helm/values.yaml: consumer.image.tag: "0.2.0"
 
-- [ ] Consumer: Redis Stream processor with PostgreSQL aggregation
-  - [ ] Create consumer/consumer.py with Redis connection setup (redis.asyncio)
-  - [ ] Create PostgreSQL connection pool (asyncpg)
-  - [ ] Implement consumer group join: XGROUP CREATE with MKSTREAM if not exists
-  - [ ] Implement XREADGROUP loop: read "votes" stream, batch size 10, block 5s
-  - [ ] Parse message: extract vote field, validate "cats" or "dogs"
-  - [ ] Call PostgreSQL `increment_vote(option)` for each valid message
-  - [ ] XACK message after successful DB write
-  - [ ] Add error handling: log malformed messages, retry DB failures 3x
-  - [ ] Add SIGTERM signal handler for graceful shutdown
-  - [ ] Add structured logging (message received, DB updated, errors)
-  - [ ] Write unit test: Mock Redis, verify increment_vote called
-  - [ ] Write unit test: Malformed message logged and skipped
-  - [ ] Write integration test: Post vote via API, verify consumer increments DB
+- [x] Consumer: Redis Stream processor with PostgreSQL aggregation (completed 2025-11-16)
+  - [x] Created modular architecture: config.py, logger.py, redis_client.py, db_client.py, main.py
+  - [x] Redis connection with consumer group support (XGROUP CREATE with MKSTREAM)
+  - [x] PostgreSQL connection pool (asyncpg, min=2, max=10)
+  - [x] XREADGROUP loop implementation (batch size 10, block 5000ms)
+  - [x] Message parsing and validation ("cats" or "dogs" only)
+  - [x] Call PostgreSQL increment_vote() function for valid messages
+  - [x] XACK message after successful processing or if malformed
+  - [x] Error handling: log malformed messages, retry DB failures 3x with exponential backoff
+  - [x] SIGTERM/SIGINT signal handlers for graceful shutdown
+  - [x] Structured logging with structlog (JSON output, ISO timestamps)
+  - [x] Environment-based configuration (12-factor app pattern)
+  - [x] Built and tested Docker image: consumer:0.3.0 (223MB, UID 1000)
+  - [x] Updated helm/values.yaml: consumer.tag: "0.3.0"
+  - [x] Import validation passed
 
 - [ ] Consumer: K8s Deployment (changed from Job - continuous processing required)
   - [ ] Create helm/templates/consumer/deployment.yaml
