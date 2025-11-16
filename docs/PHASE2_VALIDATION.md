@@ -180,8 +180,8 @@ docker inspect api:0.3.2 --format='User: {{.Config.User}}'
 # Verify it's the distroless nonroot user (UID 65532)
 ```
 
-- [ ] API runs as UID 65532 (distroless nonroot)
-- [ ] Not running as root (root is UID 0)
+- [X] API runs as UID 65532 (distroless nonroot)
+- [X] Not running as root (root is UID 0)
 
 **2.5 Test API Image Size**
 
@@ -192,8 +192,8 @@ docker images api:0.3.2 --format "{{.Size}}"
 # Expected: ~166MB (distroless base)
 ```
 
-- [ ] API image size ≤ 200MB
-- [ ] Using distroless base (verified in Dockerfile)
+- [X] API image size ≤ 200MB
+- [X] Using distroless base (verified in Dockerfile)
 
 ---
 
@@ -201,29 +201,29 @@ docker images api:0.3.2 --format "{{.Size}}"
 
 **3.1 Test Consumer Container Startup**
 
+**Note:** Consumer will attempt to connect to Redis/PostgreSQL and fail. This is expected. The important validation points are: structured logging, no import errors, and graceful shutdown sequence.
+
 ```bash
 # Run consumer (will fail to connect to Redis/DB, that's expected)
-docker run --rm --name consumer-test consumer:0.3.0 &
-CONTAINER_ID=$!
+docker run --rm --name consumer-test consumer:0.3.0
 
-# Wait 2 seconds
-sleep 2
-
-# Check logs
-docker logs consumer-test 2>&1 | head -20
-
-# Expected output includes JSON structured logs:
+# Expected output (JSON structured logs):
 # {"event": "consumer_starting", "version": "0.2.0", ...}
-# Connection errors are expected without Redis/PostgreSQL
-
-# Kill container
-docker stop consumer-test 2>/dev/null || true
+# {"event": "creating_redis_client", ...}
+# {"error": "...", "event": "fatal_error", ...}  <- Expected without Redis
+# {"event": "consumer_shutting_down", ...}
+# {"event": "closing_redis_client", ...}
+# {"event": "consumer_shutdown_complete", ...}
+#
+# Connection errors are EXPECTED without Redis/PostgreSQL.
+# Graceful shutdown sequence proves error handling works correctly.
 ```
 
 - [ ] Consumer container starts
-- [ ] Structured logging (JSON format)
+- [ ] Structured logging (JSON format with ISO timestamps)
 - [ ] Version 0.2.0 in startup log
 - [ ] No Python import errors
+- [ ] Graceful shutdown sequence on connection failure (expected behavior)
 
 **3.2 Test Consumer Imports**
 
