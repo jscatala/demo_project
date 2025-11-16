@@ -23,9 +23,9 @@ docker images | grep -E '(api|consumer)' | grep -E '(0.3|0.2)'
 # api        0.3.2   [IMAGE_ID]   [TIME]   166MB
 ```
 
-- [ ] api:0.3.2 image exists
-- [ ] consumer:0.3.0 image exists
-- [ ] Image sizes within expected range (API ~166MB, Consumer ~223MB)
+- [X] api:0.3.2 image exists
+- [X] consumer:0.3.0 image exists
+- [X] Image sizes within expected range (API ~166MB, Consumer ~223MB)
 
 **1.2 Verify Source Files**
 
@@ -54,8 +54,10 @@ ls -l consumer/*.py
 
 **2.1 Test API Container Startup**
 
+**Note:** API will attempt to connect to Redis/PostgreSQL on startup. Without these services running, connection errors are expected but can be ignored for basic validation. The important checks are: no import errors and Uvicorn starts.
+
 ```bash
-# Run API container
+# Run API container (will show connection errors without Redis/PostgreSQL)
 docker run --rm -d --name api-test -p 8000:8000 api:0.3.2
 
 # Wait for startup
@@ -69,6 +71,10 @@ docker logs api-test
 # INFO:     Waiting for application startup.
 # INFO:     Application startup complete.
 # INFO:     Uvicorn running on http://0.0.0.0:8000
+#
+# Connection errors are EXPECTED without Redis/PostgreSQL:
+# ERROR: Redis connection failed: Connection refused
+# (This is OK for basic container validation)
 
 # Stop container
 docker stop api-test
@@ -78,6 +84,7 @@ docker stop api-test
 - [ ] Uvicorn starts on port 8000
 - [ ] No import errors
 - [ ] Application startup complete
+- [ ] Connection errors to Redis/DB expected (can be ignored)
 
 **2.2 Test API Health Endpoints**
 
@@ -378,6 +385,59 @@ helm lint helm/
 ### 5. API Functionality Validation (Requires Redis/PostgreSQL)
 
 **Note:** These tests require Redis and PostgreSQL running. Can be done in Phase 5 integration testing.
+
+**Setup: Start Required Services**
+
+```bash
+# Option 1: Using Docker (quick test)
+docker run -d --name redis-test -p 6379:6379 redis:7-alpine
+docker run -d --name postgres-test -p 5432:5432 \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=votes \
+  postgres:15-alpine
+
+# Wait for services to be ready
+sleep 5
+
+# Initialize PostgreSQL schema
+docker exec -i postgres-test psql -U postgres -d votes <<'EOF'
+CREATE TABLE IF NOT EXISTS votes (
+    id SERIAL PRIMARY KEY,
+    option VARCHAR(10) NOT NULL CHECK (option IN ('cats', 'dogs')),
+    count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_option ON votes(option);
+INSERT INTO votes (option, count) VALUES ('cats', 0), ('dogs', 0) ON CONFLICT DO NOTHING;
+
+CREATE OR REPLACE FUNCTION increment_vote(vote_option VARCHAR(10))
+RETURNS TABLE(option VARCHAR(10), new_count INTEGER) AS $$
+BEGIN
+    UPDATE votes SET count = count + 1, updated_at = NOW()
+    WHERE votes.option = vote_option
+    RETURNING votes.option, votes.count INTO option, new_count;
+    RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
+EOF
+
+# Start API with connections to test services
+docker run -d --name api-test -p 8000:8000 \
+  -e REDIS_URL="redis://host.docker.internal:6379" \
+  -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/votes" \
+  -e CORS_ORIGINS="http://localhost:3000" \
+  api:0.3.2
+
+# Wait for API startup
+sleep 3
+```
+
+**Cleanup after testing:**
+```bash
+docker stop api-test redis-test postgres-test
+docker rm api-test redis-test postgres-test
+```
 
 **5.1 POST /api/vote Endpoint**
 
