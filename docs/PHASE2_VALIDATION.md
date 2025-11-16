@@ -219,11 +219,11 @@ docker run --rm --name consumer-test consumer:0.3.0
 # Graceful shutdown sequence proves error handling works correctly.
 ```
 
-- [ ] Consumer container starts
-- [ ] Structured logging (JSON format with ISO timestamps)
-- [ ] Version 0.2.0 in startup log
-- [ ] No Python import errors
-- [ ] Graceful shutdown sequence on connection failure (expected behavior)
+- [X] Consumer container starts
+- [X] Structured logging (JSON format with ISO timestamps)
+- [X] Version 0.2.0 in startup log
+- [X] No Python import errors
+- [X] Graceful shutdown sequence on connection failure (expected behavior)
 
 **3.2 Test Consumer Imports**
 
@@ -242,9 +242,9 @@ print('✓ All imports successful')
 # ✓ All imports successful
 ```
 
-- [ ] All Python modules import successfully
-- [ ] No ModuleNotFoundError
-- [ ] No syntax errors
+- [X] All Python modules import successfully
+- [X] No ModuleNotFoundError
+- [X] No syntax errors
 
 **3.3 Verify Consumer Non-Root User**
 
@@ -256,8 +256,8 @@ docker run --rm consumer:0.3.0 id
 # uid=1000(appuser) gid=1000(appuser) groups=1000(appuser)
 ```
 
-- [ ] Consumer runs as UID 1000 (appuser)
-- [ ] Not running as root
+- [X] Consumer runs as UID 1000 (appuser)
+- [X] Not running as root
 
 **3.4 Test Consumer Configuration**
 
@@ -279,9 +279,9 @@ print('✓ Configuration loaded correctly')
 # ✓ Configuration loaded correctly
 ```
 
-- [ ] Environment variables loaded
-- [ ] Config validation works
-- [ ] Default values applied when env vars missing
+- [X] Environment variables loaded
+- [X] Config validation works
+- [X] Default values applied when env vars missing
 
 **3.5 Test Consumer Image Size**
 
@@ -292,8 +292,8 @@ docker images consumer:0.3.0 --format "{{.Size}}"
 # Expected: ~223MB (Python 3.13-slim + dependencies)
 ```
 
-- [ ] Consumer image size ≤ 250MB
-- [ ] Size reasonable for Python 3.13 + asyncpg/redis/structlog
+- [X] Consumer image size ≤ 250MB
+- [X] Size reasonable for Python 3.13 + asyncpg/redis/structlog
 
 ---
 
@@ -317,12 +317,12 @@ grep -A 10 "^consumer:" helm/values.yaml
 # replicas, streamName, consumerGroup, batchSize, blockMs, maxRetries, logLevel
 ```
 
-- [ ] API image tag: 0.3.2
-- [ ] Consumer image tag: 0.3.0
-- [ ] Consumer replicas: 1
-- [ ] Consumer streamName: "votes"
-- [ ] Consumer consumerGroup: "vote-processors"
-- [ ] Consumer configuration present
+- [X] API image tag: 0.3.2
+- [X] Consumer image tag: 0.3.0
+- [X] Consumer replicas: 1
+- [X] Consumer streamName: "votes"
+- [X] Consumer consumerGroup: "vote-processors"
+- [X] Consumer configuration present
 
 **4.2 Consumer Deployment Validation**
 
@@ -342,12 +342,12 @@ grep "name: DATABASE_URL" -A 4 /tmp/consumer-deploy.yaml
 # Should show 9 environment variables total
 ```
 
-- [ ] Consumer deployment renders successfully
-- [ ] Kubectl dry-run validation passes
-- [ ] 9 environment variables configured
-- [ ] DATABASE_URL from secret reference
-- [ ] REDIS_URL from values
-- [ ] CONSUMER_NAME from fieldRef (pod name)
+- [X] Consumer deployment renders successfully
+- [X] Kubectl dry-run validation passes
+- [X] 9 environment variables configured
+- [X] DATABASE_URL from secret reference
+- [X] REDIS_URL from values
+- [X] CONSUMER_NAME from fieldRef (pod name)
 
 **4.3 Security Context Validation**
 
@@ -370,10 +370,10 @@ helm template voting-test helm/ --show-only templates/consumer/deployment.yaml |
 # allowPrivilegeEscalation: false
 ```
 
-- [ ] API runAsNonRoot: true
-- [ ] Consumer runAsNonRoot: true
-- [ ] Both drop all capabilities
-- [ ] allowPrivilegeEscalation: false
+- [X] API runAsNonRoot: true
+- [X] Consumer runAsNonRoot: true
+- [X] Both drop all capabilities
+- [X] allowPrivilegeEscalation: false
 
 **4.4 Probes Validation**
 
@@ -392,10 +392,10 @@ helm template voting-test helm/ --show-only templates/consumer/deployment.yaml |
 # exec command: ps aux | grep python
 ```
 
-- [ ] API has liveness probe (HTTP /health)
-- [ ] API has readiness probe (HTTP /ready)
-- [ ] Consumer has liveness probe (exec ps check)
-- [ ] Probe timings configured
+- [X] API has liveness probe (HTTP /health)
+- [X] API has readiness probe (HTTP /ready)
+- [X] Consumer has liveness probe (exec ps check)
+- [X] Probe timings configured
 
 **4.5 Full Helm Lint**
 
@@ -407,8 +407,8 @@ helm lint helm/
 # 1 chart(s) linted, 0 chart(s) failed
 ```
 
-- [ ] Helm lint passes with 0 failures
-- [ ] No errors or warnings (INFO messages OK)
+- [X] Helm lint passes with 0 failures
+- [X] No errors or warnings (INFO messages OK)
 
 ---
 
@@ -461,20 +461,16 @@ docker run -d --name api-test -p 8000:8000 \
 
 # Wait for API startup
 sleep 3
-```
 
-**Cleanup after testing:**
-```bash
-docker stop api-test redis-test postgres-test
-docker rm api-test redis-test postgres-test
+# Services are now running and ready for testing (sections 5.1-5.4)
 ```
 
 **5.1 POST /api/vote Endpoint**
 
-```bash
-# Start required services (docker-compose or K8s)
-# Then test vote endpoint
+**Note:** Assumes services running from setup section above.
 
+```bash
+# Test vote endpoint
 curl -X POST http://localhost:8000/api/vote \
   -H "Content-Type: application/json" \
   -d '{"option": "cats"}'
@@ -546,6 +542,13 @@ dd if=/dev/zero bs=1M count=2 | curl -X POST http://localhost:8000/api/vote \
 
 - [ ] Requests >1MB rejected with 413
 - [ ] Request size limit configurable via MAX_REQUEST_SIZE
+
+**Cleanup after Section 5 tests:**
+```bash
+# Stop and remove test containers
+docker stop api-test redis-test postgres-test
+docker rm api-test redis-test postgres-test
+```
 
 ---
 
