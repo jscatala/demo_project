@@ -63,7 +63,7 @@ Demo_project/
 │
 ├── docs/
 │   ├── HANDOFF_GUIDE.md              # ⭐ This file (resuming work)
-│   ├── CONVENTIONS.md                 # Code standards
+│   ├── CONVENTIONS.md                # Code standards
 │   │
 │   ├── sessions/                      # ⭐ Session history
 │   │   ├── README.md                  # Session index

@@ -102,17 +102,23 @@
   - [x] Update helm/values.yaml: api.image.tag: "0.2.1"
   - [x] Fix HEAD method support on /health and /ready endpoints
 
-- [ ] POST /api/vote endpoint with Redis Stream integration
-  - [ ] Define Pydantic model: `VoteRequest(option: Literal["cats", "dogs"])`
-  - [ ] Create Redis client singleton with connection pool (redis.asyncio)
-  - [ ] Implement POST /vote route handler with input validation
-  - [ ] Add XADD call to write vote to "votes" stream with fields: {vote, timestamp, request_id}
-  - [ ] Define error responses: 400 for invalid option, 503 for Redis unavailable
-  - [ ] Add structured logging (vote received, vote written, errors)
-  - [ ] Write unit test: valid vote "cats" returns 201
-  - [ ] Write unit test: invalid vote "birds" returns 400
-  - [ ] Write unit test: Redis connection failure returns 503
-  - [ ] Manual test: POST http://localhost:8000/vote with curl, verify XLEN increments
+- [x] POST /api/vote endpoint with Redis Stream integration (completed 2025-11-15)
+  - [x] Define Pydantic model: `VoteRequest(option: Literal["cats", "dogs"])`
+  - [x] Create Redis client singleton with connection pool (redis.asyncio)
+  - [x] Implement POST /vote route handler with input validation
+  - [x] Add XADD call to write vote to "votes" stream with fields: {vote, timestamp, request_id}
+  - [x] Define error responses: 422 for invalid option, 503 for Redis unavailable
+  - [x] Add structured logging (vote received, vote written, errors)
+  - [x] Write unit test: valid vote "cats" returns 201
+  - [x] Write unit test: invalid vote "birds" returns 422 (Pydantic validation)
+  - [x] Write unit test: Redis connection failure returns 503
+  - [x] Manual test: POST http://localhost:8000/api/vote with curl, verify XLEN increments
+  - [x] Created modular architecture: models.py, redis_client.py, routes/, services/
+  - [x] Added 6 unit tests with mocked Redis client
+  - [x] Updated Dockerfile to copy all application files
+  - [x] Added async-timeout dependency
+  - [x] Built and tested Docker image: api:0.3.0
+  - [x] Updated helm/values.yaml: api.tag: "0.3.0"
 
 - [ ] GET /api/results endpoint with PostgreSQL integration
   - [ ] Add asyncpg dependency to api/requirements.txt
