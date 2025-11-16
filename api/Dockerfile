@@ -27,6 +27,7 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /home/nonroot/.local
 COPY main.py models.py redis_client.py db_client.py ./
 COPY routes/ routes/
 COPY services/ services/
+COPY middleware/ middleware/
 
 # Expose port
 EXPOSE 8000

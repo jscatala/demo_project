@@ -143,17 +143,25 @@
   - [x] Updated helm/values.yaml: api.tag: "0.3.1"
   - [x] Manual validation: zero votes, actual votes (66.67% / 33.33%), caching
 
-- [ ] FastAPI security configuration (CORS, headers, request limits)
-  - [ ] Add fastapi-cors middleware with origin from env var (default: http://localhost:3000)
-  - [ ] Create security headers middleware (CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff)
-  - [ ] Add request body size limit middleware (1MB max via LimitUploadSize)
-  - [ ] Configure HSTS header (Strict-Transport-Security) for HTTPS enforcement
-  - [ ] Add X-Forwarded-For trusted proxy configuration
-  - [ ] Write test: Verify security headers in response
-  - [ ] Write test: CORS preflight request succeeds for allowed origin
-  - [ ] Write test: CORS rejects untrusted origin
-  - [ ] Write test: Request body >1MB rejected with 413
-  - [ ] Document security config in README: CORS_ORIGINS env var
+- [x] FastAPI security configuration (CORS, headers, request limits) (completed 2025-11-15)
+  - [x] CORS middleware already configured with CORS_ORIGINS env var (enhanced)
+  - [x] Create security headers middleware (CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff)
+  - [x] Add request body size limit middleware (1MB max, configurable via MAX_REQUEST_SIZE)
+  - [x] Configure HSTS header (Strict-Transport-Security) for HTTPS enforcement (production only)
+  - [x] Skipped X-Forwarded-For trusted proxy (handled by Kubernetes/Ingress)
+  - [x] Write test: Verify security headers in response
+  - [x] Write test: CORS preflight request succeeds for allowed origin
+  - [x] Write test: CORS rejects untrusted origin
+  - [x] Write test: Request body >1MB rejected with 413
+  - [x] Document security config in README: CORS_ORIGINS, MAX_REQUEST_SIZE, ENVIRONMENT
+  - [x] Created middleware/security.py with SecurityHeadersMiddleware and RequestSizeLimitMiddleware
+  - [x] Enhanced CORS: restricted headers (Content-Type, Authorization, Accept), max_age=600
+  - [x] Added 13 security tests in tests/test_security.py
+  - [x] Created comprehensive api/README.md with security documentation
+  - [x] Updated main.py with middleware (correct order)
+  - [x] Built and tested Docker image: api:0.3.2
+  - [x] Updated helm/values.yaml: api.tag: "0.3.2"
+  - [x] Manual validation: security headers verified, CORS working, endpoints functional
 
 - [ ] Python consumer Dockerfile with Python 3.13-slim multistage build
   - [ ] Create consumer/requirements.txt (redis, asyncpg, structlog)

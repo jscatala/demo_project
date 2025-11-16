@@ -13,6 +13,10 @@ from redis_client import init_redis, close_redis
 from db_client import init_db, close_db
 from routes.vote import router as vote_router
 from routes.results import router as results_router
+from middleware.security import (
+    SecurityHeadersMiddleware,
+    RequestSizeLimitMiddleware,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -49,19 +53,24 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Voting API",
-    version="0.3.1",
+    version="0.3.2",
     description="API for Cats vs Dogs voting system",
     lifespan=lifespan,
 )
 
-# CORS middleware
+# Security middleware (order matters: first added = last executed)
+app.add_middleware(RequestSizeLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS middleware (more restrictive configuration)
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Include routers
@@ -74,7 +83,7 @@ async def root():
     """Root endpoint"""
     return {
         "message": "Voting API - Cats vs Dogs",
-        "version": "0.3.1",
+        "version": "0.3.2",
         "status": "running"
     }
 
