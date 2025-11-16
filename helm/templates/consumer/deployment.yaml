@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+  namespace: voting-consumer
+  labels:
+    app.kubernetes.io/name: voting-app
+    app.kubernetes.io/component: consumer
+    app.kubernetes.io/part-of: voting-system
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/version: {{ .Values.images.consumer.tag | quote }}
+spec:
+  replicas: {{ .Values.consumer.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: voting-app
+      app.kubernetes.io/component: consumer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: voting-app
+        app.kubernetes.io/component: consumer
+        app.kubernetes.io/part-of: voting-system
+        app.kubernetes.io/version: {{ .Values.images.consumer.tag | quote }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: consumer
+        image: {{ .Values.images.consumer.repository }}:{{ .Values.images.consumer.tag }}
+        imagePullPolicy: {{ .Values.images.consumer.pullPolicy }}
+        env:
+        # Redis configuration
+        - name: REDIS_URL
+          value: {{ .Values.redis.url | quote }}
+        # PostgreSQL configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: voting-secrets
+              key: database-url
+        # Consumer configuration
+        - name: STREAM_NAME
+          value: {{ .Values.consumer.streamName | default "votes" | quote }}
+        - name: CONSUMER_GROUP
+          value: {{ .Values.consumer.consumerGroup | default "vote-processors" | quote }}
+        - name: CONSUMER_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: BATCH_SIZE
+          value: {{ .Values.consumer.batchSize | default 10 | quote }}
+        - name: BLOCK_MS
+          value: {{ .Values.consumer.blockMs | default 5000 | quote }}
+        - name: MAX_RETRIES
+          value: {{ .Values.consumer.maxRetries | default 3 | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.consumer.logLevel | default "INFO" | quote }}
+        resources:
+          requests:
+            memory: {{ .Values.consumer.resources.requests.memory | quote }}
+            cpu: {{ .Values.consumer.resources.requests.cpu | quote }}
+          limits:
+            memory: {{ .Values.consumer.resources.limits.memory | quote }}
+            cpu: {{ .Values.consumer.resources.limits.cpu | quote }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+        # Liveness probe: check if process is running
+        # No HTTP endpoint, so we check if the main process is alive
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ps aux | grep -v grep | grep -q python
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3

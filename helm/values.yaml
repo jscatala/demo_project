@@ -41,6 +41,13 @@ api:
 
 # Consumer configuration
 consumer:
+  replicas: 1
+  streamName: "votes"
+  consumerGroup: "vote-processors"
+  batchSize: 10
+  blockMs: 5000
+  maxRetries: 3
+  logLevel: "INFO"
   resources:
     requests:
       memory: "256Mi"

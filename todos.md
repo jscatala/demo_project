@@ -190,18 +190,20 @@
   - [x] Updated helm/values.yaml: consumer.tag: "0.3.0"
   - [x] Import validation passed
 
-- [ ] Consumer: K8s Deployment (changed from Job - continuous processing required)
-  - [ ] Create helm/templates/consumer/deployment.yaml
-  - [ ] Set namespace: voting-consumer
-  - [ ] Configure image: consumer:{{ .Values.consumer.image.tag }}
-  - [ ] Set restartPolicy: Always (continuous processing)
-  - [ ] Add env vars: DATABASE_URL, REDIS_URL from secrets
-  - [ ] Set resources: requests (256Mi/200m), limits (512Mi/500m)
-  - [ ] Set replicas: 1 (single consumer for consumer group)
-  - [ ] Add securityContext: runAsNonRoot, runAsUser: 1000
-  - [ ] Add liveness probe: TCP socket check (no HTTP endpoint for batch process)
-  - [ ] Validate: kubectl apply --dry-run=client -f deployment.yaml
-  - [ ] Update helm/values.yaml with consumer config
+- [x] Consumer: K8s Deployment (completed 2025-11-16)
+  - [x] Created helm/templates/consumer/deployment.yaml
+  - [x] Set namespace: voting-consumer
+  - [x] Configured image: consumer:{{ .Values.images.consumer.tag }} (0.3.0)
+  - [x] Set restartPolicy: Always (continuous processing)
+  - [x] Added 9 environment variables: REDIS_URL, DATABASE_URL, STREAM_NAME, CONSUMER_GROUP, CONSUMER_NAME, BATCH_SIZE, BLOCK_MS, MAX_RETRIES, LOG_LEVEL
+  - [x] Set resources: requests (256Mi/200m), limits (512Mi/500m)
+  - [x] Set replicas: 1 (single consumer for consumer group)
+  - [x] Added securityContext: runAsNonRoot: true, runAsUser: 1000, fsGroup: 1000
+  - [x] Added liveness probe: exec command (ps aux check for python process)
+  - [x] Validated: kubectl apply --dry-run=client (passed)
+  - [x] Updated helm/values.yaml with consumer config (replicas, streamName, consumerGroup, batchSize, blockMs, maxRetries, logLevel)
+  - [x] Helm lint: 0 errors
+  - [x] Helm template: renders successfully
 
 ## Phase 3: Frontend (High Priority)
 - [ ] TypeScript app multistage Dockerfile (nginx serving static files)
