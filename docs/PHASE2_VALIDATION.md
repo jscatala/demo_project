@@ -127,9 +127,9 @@ docker stop api-test redis-test postgres-test
 docker rm redis-test postgres-test
 ```
 
-- [ ] /health endpoint returns 200 OK
-- [ ] /ready endpoint returns 200 OK
-- [ ] HEAD method supported on both endpoints
+- [X] /health endpoint returns 200 OK
+- [X] /ready endpoint returns 200 OK
+- [X] HEAD method supported on both endpoints
 
 **2.3 Test API Security Headers**
 
@@ -160,24 +160,28 @@ curl -I http://localhost:8000/health
 docker stop api-test
 ```
 
-- [ ] X-Frame-Options header present
-- [ ] X-Content-Type-Options header present
-- [ ] Content-Security-Policy header present
-- [ ] X-XSS-Protection header present
-- [ ] Referrer-Policy header present
+- [X] X-Frame-Options header present
+- [X] X-Content-Type-Options header present
+- [X] Content-Security-Policy header present
+- [X] X-XSS-Protection header present
+- [X] Referrer-Policy header present
 
 **2.4 Verify API Non-Root User**
 
+**Note:** API uses distroless image (no shell). Use `docker inspect` to verify user.
+
 ```bash
-# Check API runs as non-root
-docker run --rm api:0.3.2 id
+# Check API configured user (distroless has no shell/id command)
+docker inspect api:0.3.2 --format='User: {{.Config.User}}'
 
 # Expected output:
-# uid=65532(nonroot) gid=65532(nonroot) groups=65532(nonroot)
+# User: 65532
+
+# Verify it's the distroless nonroot user (UID 65532)
 ```
 
 - [ ] API runs as UID 65532 (distroless nonroot)
-- [ ] Not running as root
+- [ ] Not running as root (root is UID 0)
 
 **2.5 Test API Image Size**
 
