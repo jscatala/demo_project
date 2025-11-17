@@ -283,7 +283,7 @@
   - [x] "Vote Again" button clears errors and allows re-voting
   - [x] Built and tested Docker image: frontend:0.5.0 (9.05KB gzip bundle)
   - [x] Updated helm/values.yaml: frontend.tag: "0.5.0"
-- [ ] Optional: Server-Sent Events for live updates
+- [~] Server-Sent Events for live updates (Deferred - see Future Improvements)
 
 ## Phase 4: Security & Hardening (High Priority)
 - [ ] Non-root containers for all services
@@ -303,6 +303,43 @@
 - [ ] Architecture diagram (K8s resources, event flow)
 - [ ] Local deployment guide (helm install)
 - [ ] Production readiness checklist
+
+---
+
+## Future Improvements
+
+**See:** `docs/tech-to-review.md` for detailed analysis of each improvement
+
+### Real-time & Performance
+- **Server-Sent Events (SSE):** Real-time vote updates without polling
+  - Backend: FastAPI SSE endpoint streaming from Redis
+  - Frontend: EventSource client with auto-reconnect
+  - Trade-off: Complexity vs better UX
+  - Status: Deferred post-Phase 3
+
+### Configuration Management
+- **Configuration Server:** Centralized config with hot reload
+  - Options: Consul, Spring Cloud Config, etcd, custom service
+  - Benefits: No pod restarts for config changes, versioning, audit trail
+  - Trade-off: Additional infrastructure vs better DX
+  - Status: Revisit at 5+ microservices
+
+### Observability
+- **Distributed Tracing:** OpenTelemetry + Jaeger/Tempo
+- **Metrics:** Prometheus + Grafana dashboards
+- **Centralized Logging:** ELK/Loki stack
+- **Service Mesh:** Istio/Linkerd for advanced traffic management
+
+### Security Enhancements
+- **mTLS:** Service-to-service encryption
+- **OPA/Kyverno:** Policy enforcement
+- **Secrets Management:** HashiCorp Vault or External Secrets Operator
+- **Image Signing:** Cosign + admission controller
+
+### Testing
+- **Contract Testing:** Pact for API contracts
+- **Chaos Engineering:** Chaos Mesh for resilience testing
+- **Performance Testing:** k6 or Locust for load testing
 
 ---
 
