@@ -150,26 +150,37 @@ kubectl port-forward svc/frontend 8080:80
 
 ### Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Conventional Commits specification
-- Branch naming conventions
-- Development workflow
+**TDD Required:** Test-Driven Development is mandatory for all new features.
+
+See documentation:
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Conventional Commits, TDD workflow
+- [TESTING.md](docs/TESTING.md) - Testing guide, coverage requirements
+- [CONVENTIONS.md](docs/CONVENTIONS.md) - Code standards, atomic principles
+
+**Run tests:**
+```bash
+# Unit tests (Docker)
+./scripts/run-unit-tests.sh [frontend|api|consumer|all]
+
+# Integration tests (Minikube + Helm)
+./scripts/run-integration-tests.sh
+```
 
 ## Project Status
 
-**Current Version:** 0.5.0-dev
+**Current Version:** 0.5.0
 
 **Completed Phases:**
 - ✅ **Phase 0:** Project documentation and architecture
 - ✅ **Phase 1:** Kubernetes infrastructure (namespaces, deployments, StatefulSets, Ingress)
 - ✅ **Phase 2:** Backend core (FastAPI + Consumer implementation)
+- ✅ **Phase 3:** Frontend implementation (VoteButtons, VoteResults, API integration)
+- ✅ **Phase 3.5:** Testing & Validation (Vitest, 100% component coverage, TDD established)
 
-**In Progress:**
-- ⏳ **Phase 3:** Frontend implementation
-  - ✅ VoteButtons component (accessibility, responsive)
-  - ✅ VoteResults component (progress bars, live updates)
-  - ✅ API integration (custom hooks, error handling, refetch)
-  - ⬜ Optional: Server-Sent Events for real-time updates
+**Next Phases:**
+- **Phase 4:** Security & Hardening (network policies, container scanning, input validation)
+- **Phase 5:** Integration testing (full stack deployment, end-to-end flows)
+- **Phase 6:** Documentation and production readiness
 
 **Component Versions:**
 - API: v0.3.2 (FastAPI, security hardened, Redis + PostgreSQL)
@@ -178,12 +189,22 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Documentation
 
-- [Architecture Decision Records](docs/adr/) - Key architectural decisions
-- [Issues & Solutions](docs/issues/) - Problems encountered and how we solved them
-- [Conventions](docs/CONVENTIONS.md) - Code standards and security practices
-- [Session Logs](docs/sessions/) - Development session history
+**Development:**
+- [CONTRIBUTING.md](CONTRIBUTING.md) - TDD workflow, conventional commits, PR process
+- [TESTING.md](docs/TESTING.md) - Testing guide, TDD examples, coverage requirements
+- [CONVENTIONS.md](docs/CONVENTIONS.md) - Code standards, atomic principles, security practices
+
+**Architecture:**
+- [Architecture Decision Records](docs/adr/) - Key architectural decisions (5 ADRs)
+- [Issues & Solutions](docs/issues/) - Problems encountered and solutions
+
+**Validation:**
 - [Phase 1 Validation](docs/PHASE1_VALIDATION.md) - Infrastructure validation protocol
 - [Phase 2 Validation](docs/PHASE2_VALIDATION.md) - Backend validation protocol
+- [Phase 3 Validation](docs/PHASE3_VALIDATION.md) - Frontend validation protocol
+
+**History:**
+- [Session Logs](docs/sessions/) - Development session history (12 sessions)
 - [Changelog](CHANGELOG.md) - Version history
 
 ## Resuming Work

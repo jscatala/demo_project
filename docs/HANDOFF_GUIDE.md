@@ -26,9 +26,10 @@ Reference these files using `@` syntax to provide context:
 
 **Include when relevant:**
 - `@Demo_project/system_requirements.txt` - Original requirements
+- `@docs/TESTING.md` - Testing guide (TDD workflow, examples)
 - `@docs/adr/` - Architectural decisions
 - `@docs/issues/` - Problems encountered and solutions
-- `@Demo_project/CONVENTIONS.md` - Code standards
+- `@Demo_project/CONVENTIONS.md` - Code standards and TDD principles
 - `@Demo_project/README.md` - Project overview
 
 ## Session Workflow
@@ -40,9 +41,11 @@ Next task: Starting Phase 2
 ```
 
 ### 2. Work on Tasks
+- **TDD Required:** Write tests BEFORE implementation (Red-Green-Refactor)
 - Reference current phase in `@todos.md`
-- Follow conventions in `@CONVENTIONS.md`
+- Follow conventions in `@CONVENTIONS.md` (includes TDD principles)
 - Use Conventional Commits (see `@CONTRIBUTING.md`)
+- Run tests: `./scripts/run-unit-tests.sh` (Docker-based)
 
 ### 3. End Session
 Ask the AI to:
@@ -252,10 +255,36 @@ git commit -m "feat(api): implement POST /vote endpoint
 Session: docs/sessions/2025-11-15-session-02.md"
 ```
 
+## Testing
+
+**TDD is mandatory for all new features.**
+
+### Quick Test Commands
+
+```bash
+# Unit tests (Docker-based)
+./scripts/run-unit-tests.sh [frontend|api|consumer|all]
+
+# Integration tests (Minikube)
+./scripts/run-integration-tests.sh
+
+# Coverage report
+docker run --rm frontend-test:latest npm run test:coverage -- --run
+```
+
+### TDD Workflow
+
+1. **🔴 Red:** Write failing test first
+2. **🟢 Green:** Write minimal code to pass
+3. **🔵 Refactor:** Improve while tests pass
+
+See `@docs/TESTING.md` for detailed examples.
+
 ## Questions?
 
 See:
+- Testing guide: `@docs/TESTING.md`
 - Project overview: `@README.md`
-- Contributing guide: `@CONTRIBUTING.md`
-- Conventions: `@docs/CONVENTIONS.md`
+- Contributing guide: `@CONTRIBUTING.md` (includes TDD workflow)
+- Conventions: `@docs/CONVENTIONS.md` (includes TDD principles)
 - Architecture: `@docs/adr/`
