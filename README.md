@@ -1,8 +1,8 @@
 # Voting Website: Cats vs Dogs
 
-![Version](https://img.shields.io/badge/version-0.5.0--dev-blue)
+![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Phase](https://img.shields.io/badge/phase-3%20in%20progress-yellow)
+![Phase](https://img.shields.io/badge/phase-3.5%20complete-green)
 
 Event-driven voting application deployed on Kubernetes with real-time results.
 
@@ -12,7 +12,7 @@ A microservices-based voting platform where users vote between two options (Cats
 
 ## Tech Stack
 
-- **Frontend:** React 18, TypeScript, Vite, Nginx v0.4.0 - Phase 3 ⏳
+- **Frontend:** React 18, TypeScript, Vite, Nginx v0.5.0 - Phase 3 ✓
 - **API:** FastAPI v0.3.2 (Python) - Phase 2 ✓
 - **Event Consumer:** Python v0.3.0 (K8s Deployment) - Phase 2 ✓
 - **Data Store:** PostgreSQL 15

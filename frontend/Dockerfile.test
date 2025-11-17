@@ -1,0 +1,18 @@
+# Test stage - extends base builder for running tests
+FROM node:20-alpine AS test
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including devDependencies)
+RUN npm install
+
+# Copy source code and config
+COPY tsconfig.json vite.config.ts vitest.setup.ts index.html ./
+COPY public/ ./public/
+COPY src/ ./src/
+
+# Default command runs tests
+CMD ["npm", "test"]

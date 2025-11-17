@@ -26,8 +26,11 @@ describe('VoteResults', () => {
       const data = { cats: 1234, dogs: 5678 };
       render(<VoteResults data={data} />);
 
-      expect(screen.getByText(/1,234 votes/)).toBeInTheDocument();
-      expect(screen.getByText(/5,678 votes/)).toBeInTheDocument();
+      const catsVotes = screen.getAllByText(/1,234 votes/);
+      expect(catsVotes.length).toBeGreaterThan(0);
+
+      const dogsVotes = screen.getAllByText(/5,678 votes/);
+      expect(dogsVotes.length).toBeGreaterThan(0);
     });
 
     it('displays total votes sum', () => {
@@ -57,8 +60,9 @@ describe('VoteResults', () => {
     it('displays skeleton placeholders during loading', () => {
       const { container } = render(<VoteResults loading={true} />);
 
-      const skeletons = container.querySelectorAll('.skeleton');
-      expect(skeletons.length).toBeGreaterThan(0);
+      // CSS modules transform class names, so we check for any div with class containing 'skeleton'
+      const allDivs = container.querySelectorAll('div[class*="skeleton"]');
+      expect(allDivs.length).toBeGreaterThan(0);
     });
   });
 
