@@ -412,6 +412,196 @@ Total: 0 (HIGH: 0, CRITICAL: 0)
 
 ---
 
+## Property-Based Testing (Hypothesis / Schemathesis)
+
+**What:** Testing methodology that generates hundreds/thousands of test inputs automatically based on property specifications, rather than writing explicit test cases. Discovers edge cases humans miss.
+
+**Why:** Dramatically increases test coverage with less code. Finds unexpected bugs, edge cases, and validation gaps automatically. Complements example-based testing.
+
+**Status:** Future improvement (Post-Phase 4.2)
+
+**Current approach:**
+- Example-based tests (explicit test cases like `test_submit_vote_cats_success`)
+- Manual edge case enumeration (SQL injection, XSS, null, empty string)
+- ~30% validation coverage (6/18 scenarios in VALIDATION.md)
+- Human-identified edge cases only
+
+**Benefits of property-based testing:**
+- **Automatic edge case discovery:** Generates thousands of inputs (random strings, special chars, boundary values)
+- **Regression prevention:** Shrinks failing inputs to minimal reproducible example
+- **Less test code:** One property test = hundreds of example tests
+- **Finds unexpected bugs:** Discovers cases developers didn't think of
+- **Complements existing tests:** Works alongside example-based tests
+
+**Implementation options:**
+
+### Hypothesis (General property-based testing)
+- **Language:** Python
+- **Use case:** Unit test property validation (any Python code)
+- **Strengths:** Mature, excellent shrinking, integrates with pytest
+
+**Resources:**
+- Official docs: https://hypothesis.readthedocs.io/
+- Quickstart: https://hypothesis.readthedocs.io/en/latest/quickstart.html
+- Strategies: https://hypothesis.readthedocs.io/en/latest/data.html
+- FastAPI integration: https://hypothesis.readthedocs.io/en/latest/numpy.html
+
+**Example for this project:**
+```python
+from hypothesis import given, strategies as st
+import pytest
+
+@given(option=st.text())
+def test_vote_rejects_non_literal_values(option):
+    """Property: Any string except 'cats'/'dogs' should return 422."""
+    if option not in ["cats", "dogs"]:
+        response = client.post("/api/vote", json={"option": option})
+        assert response.status_code == 422
+```
+
+**Key concepts:**
+- `@given` decorator: Defines input generators
+- Strategies: `st.text()`, `st.integers()`, `st.lists()`, etc.
+- Shrinking: Automatically finds minimal failing input
+- Stateful testing: Test sequences of operations
+
+### Schemathesis (API-specific fuzzing)
+- **Language:** Python (CLI + library)
+- **Use case:** API fuzzing from OpenAPI schema
+- **Strengths:** Auto-generates tests from spec, finds contract violations
+
+**Resources:**
+- Official docs: https://schemathesis.readthedocs.io/
+- Getting started: https://schemathesis.readthedocs.io/en/stable/getting-started.html
+- FastAPI integration: https://schemathesis.readthedocs.io/en/stable/integration.html#fastapi
+- CLI usage: https://schemathesis.readthedocs.io/en/stable/cli.html
+
+**Example for this project:**
+```bash
+# Generate OpenAPI schema from FastAPI
+python -c "import json; from main import app; print(json.dumps(app.openapi()))" > openapi.json
+
+# Fuzz API with 1000 test cases
+schemathesis run openapi.json \
+  --base-url http://localhost:8000 \
+  --checks all \
+  --hypothesis-max-examples=1000
+```
+
+**Checks performed:**
+- `not_a_server_error`: No 500 errors
+- `status_code_conformance`: Responses match OpenAPI spec
+- `content_type_conformance`: Correct Content-Type headers
+- `response_schema_conformance`: Response bodies valid
+- `response_headers_conformance`: Headers match spec
+
+**Key concepts:**
+- Schema-driven testing: Uses OpenAPI/Swagger spec
+- Hypothesis-powered: Built on top of Hypothesis
+- Stateful API testing: Test operation sequences
+- CI/CD integration: Exit codes for pass/fail
+
+**Trade-offs:**
+- ➕ Finds edge cases humans miss (unicode, special chars, boundary values)
+- ➕ Less test code (one property = 1000s of examples)
+- ➕ Automatic shrinking (minimal failing input)
+- ➕ Great for regression testing (reproduces known failures)
+- ➕ Discovers undocumented behavior
+- ➖ Non-deterministic (can fail randomly, requires seeding for CI)
+- ➖ Slower execution (generates many inputs)
+- ➖ Harder to debug (failing input may be obscure)
+- ➖ Requires learning property-thinking (different from example-based)
+- ➖ Can't replace all example tests (some scenarios too specific)
+
+**Current project fit:**
+
+**Good candidates for property-based testing:**
+1. **Vote validation** (Hypothesis)
+   - Property: "Any string except 'cats'/'dogs' returns 422"
+   - Generates: random strings, unicode, special chars, SQL/XSS payloads
+   - Current: 6 manual example tests → 1 property test (1000+ examples)
+
+2. **API fuzzing** (Schemathesis)
+   - Test all endpoints against OpenAPI schema
+   - Discovers: malformed requests, missing validation, contract violations
+   - Current: Manual test writing → Automatic from schema
+
+3. **Results calculation** (Hypothesis)
+   - Property: "Percentages always sum to 100 (or 0 if empty)"
+   - Generates: random vote counts, edge cases (0, MAX_INT, negatives)
+   - Current: 2 manual example tests → 1 property test
+
+**Not good for:**
+- Business logic (too specific, example tests better)
+- Integration tests (deterministic flows preferred)
+- UI tests (user interactions are sequential, not random)
+
+**Adoption path:**
+1. **Phase 4.2 completion:** Add Hypothesis to requirements-test.txt
+2. **Convert existing edge cases:** Rewrite manual tests as properties
+3. **Add Schemathesis CLI:** Run in CI for regression detection
+4. **Measure impact:** Track bugs found vs maintenance cost
+5. **Expand gradually:** Add properties for new endpoints
+
+**Example: Convert manual tests to property-based**
+
+**Before (manual):**
+```python
+def test_sql_injection():
+    assert client.post("/api/vote", json={"option": "cats' OR 1=1"}).status_code == 422
+
+def test_xss():
+    assert client.post("/api/vote", json={"option": "<script>alert(1)</script>"}).status_code == 422
+
+def test_empty_string():
+    assert client.post("/api/vote", json={"option": ""}).status_code == 422
+```
+
+**After (property-based):**
+```python
+@given(option=st.text())
+def test_non_literal_vote_rejected(option):
+    assume(option not in ["cats", "dogs"])  # Exclude valid inputs
+    response = client.post("/api/vote", json={"option": option})
+    assert response.status_code == 422
+    assert "Input should be 'cats' or 'dogs'" in response.text
+```
+
+**Result:** 3 manual tests → 1 property test generating 100+ examples (including SQL/XSS/empty/unicode/etc.)
+
+**Alternatives:**
+- **Manual fuzzing:** Write custom input generators (reinventing Hypothesis)
+- **API contract testing (Pact):** Consumer-driven contracts (different use case)
+- **Mutation testing (mutmut):** Tests code coverage quality, not input validation
+
+**Decision context:**
+- Deferred from Phase 4.2 to keep focus on audit + manual edge cases
+- Current: 67% validation gap (12 untested scenarios)
+- Hypothesis could cover all 12 gaps with 1-2 property tests
+- Revisit after Phase 4.2 lifespan mocking fixed (test infrastructure ready)
+- Evaluate ROI: bugs found vs learning curve + maintenance
+
+**Recommended starting point:**
+```bash
+# 1. Install Hypothesis
+pip install hypothesis
+
+# 2. Write first property test (5 min)
+@given(option=st.text(min_size=1, max_size=100))
+def test_vote_validation_property(option):
+    assume(option not in ["cats", "dogs"])
+    response = client.post("/api/vote", json={"option": option})
+    assert response.status_code == 422
+
+# 3. Run with pytest
+pytest tests/test_vote.py::test_vote_validation_property -v
+
+# 4. Observe edge cases found
+# Hypothesis will generate: unicode, null bytes, SQL, XSS, etc.
+```
+
+---
+
 ## Template for New Technologies
 
 ```markdown

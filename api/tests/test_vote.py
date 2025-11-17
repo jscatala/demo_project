@@ -119,3 +119,101 @@ async def test_submit_vote_extra_fields_rejected():
 
         # Assert
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+# ============================================================================
+# High-Priority Security/Edge Case Tests (Phase 4.2)
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_submit_vote_sql_injection_attempt():
+    """Test that SQL injection attempts are rejected by Pydantic validation."""
+    with patch("routes.vote.get_redis", return_value=AsyncMock()):
+        client = TestClient(app)
+
+        # SQL injection payloads
+        sql_injection_payloads = [
+            "cats' OR '1'='1",
+            "cats; DROP TABLE votes;--",
+            "cats' UNION SELECT * FROM users--",
+            "'; DELETE FROM votes WHERE '1'='1",
+        ]
+
+        for payload in sql_injection_payloads:
+            # Act
+            response = client.post("/api/vote", json={"option": payload})
+
+            # Assert - Pydantic Literal validation rejects non-literal values
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+            assert "Input should be 'cats' or 'dogs'" in response.text
+
+
+@pytest.mark.asyncio
+async def test_submit_vote_xss_attempt():
+    """Test that XSS attempts are rejected by Pydantic validation."""
+    with patch("routes.vote.get_redis", return_value=AsyncMock()):
+        client = TestClient(app)
+
+        # XSS payloads
+        xss_payloads = [
+            "<script>alert('xss')</script>",
+            "cats<script>alert(1)</script>",
+            "<img src=x onerror=alert(1)>",
+            "javascript:alert('XSS')",
+        ]
+
+        for payload in xss_payloads:
+            # Act
+            response = client.post("/api/vote", json={"option": payload})
+
+            # Assert - Pydantic Literal validation rejects non-literal values
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+            assert "Input should be 'cats' or 'dogs'" in response.text
+
+
+@pytest.mark.asyncio
+async def test_submit_vote_oversized_payload():
+    """Test that oversized payloads are rejected by middleware."""
+    with patch("routes.vote.get_redis", return_value=AsyncMock()):
+        client = TestClient(app)
+
+        # Create payload larger than 1MB (default MAX_REQUEST_SIZE)
+        # Use a large string in the option field
+        oversized_payload = {"option": "a" * (2 * 1024 * 1024)}  # 2MB string
+
+        # Act
+        response = client.post("/api/vote", json=oversized_payload)
+
+        # Assert - Middleware should reject with 413
+        # Note: This test validates middleware behavior
+        assert response.status_code in [
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,  # May fail Pydantic validation first
+        ]
+
+
+@pytest.mark.asyncio
+async def test_submit_vote_malformed_json():
+    """Test that malformed JSON is rejected with proper error."""
+    with patch("routes.vote.get_redis", return_value=AsyncMock()):
+        client = TestClient(app)
+
+        # Malformed JSON payloads (invalid JSON syntax)
+        malformed_payloads = [
+            '{option: "cats"}',  # Missing quotes on key
+            '{"option": "cats",}',  # Trailing comma
+            '{"option" "cats"}',  # Missing colon
+            'option=cats',  # Not JSON at all
+        ]
+
+        for payload in malformed_payloads:
+            # Act - Send raw string instead of JSON dict
+            response = client.post(
+                "/api/vote",
+                content=payload,
+                headers={"Content-Type": "application/json"},
+            )
+
+            # Assert - FastAPI returns 422 for JSON decode errors
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

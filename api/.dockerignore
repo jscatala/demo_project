@@ -26,8 +26,7 @@ README.md
 # Logs
 *.log
 
-# Tests
-tests/
+# Tests (exclude cache and coverage, but keep tests/ for Dockerfile.test)
 .pytest_cache
 .coverage
 
