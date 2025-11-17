@@ -20,21 +20,114 @@ A microservices-based voting platform where users vote between two options (Cats
 - **Deployment:** Kubernetes, Helm
 - **Containerization:** Docker (multistage builds, distroless, non-root)
 
+## UI Preview
+
+![Voting Interface](frontend/mockup.html)
+
+**Features:**
+- Side-by-side voting buttons (Cats vs Dogs)
+- Real-time results with progress bars
+- Responsive design (mobile stacks vertically)
+- Full accessibility (ARIA, keyboard navigation)
+
+> **Note:** Open `frontend/mockup.html` in a browser to see interactive mockup
+
 ## Architecture
 
-```
-User → Frontend → API → Redis Streams → Consumer Deployment → PostgreSQL
-                    ↓                                             ↑
-                  POST /vote                                 GET /results
+### Kubernetes Infrastructure
+
+```mermaid
+graph TB
+    subgraph "voting-frontend namespace"
+        FE[Frontend Deployment<br/>nginx:1.25-alpine<br/>UID 1000]
+        FE_SVC[Frontend Service<br/>ClusterIP]
+    end
+
+    subgraph "voting-api namespace"
+        API[API Deployment<br/>FastAPI v0.3.2<br/>distroless UID 65532]
+        API_SVC[API Service<br/>ClusterIP]
+    end
+
+    subgraph "voting-consumer namespace"
+        CONSUMER[Consumer Deployment<br/>Python v0.3.0<br/>UID 1000]
+    end
+
+    subgraph "voting-data namespace"
+        REDIS[Redis StatefulSet<br/>Streams enabled]
+        REDIS_SVC[Redis Service<br/>ClusterIP]
+        PG[PostgreSQL StatefulSet<br/>votes table]
+        PG_SVC[PostgreSQL Service<br/>ClusterIP]
+    end
+
+    GATEWAY[Gateway API<br/>Rate Limiting]
+    USER[User Browser]
+
+    USER -->|HTTPS| GATEWAY
+    GATEWAY -->|HTTP| FE_SVC
+    FE_SVC --> FE
+    FE -->|POST /api/vote<br/>GET /api/results| API_SVC
+    API_SVC --> API
+    API -->|XADD| REDIS_SVC
+    REDIS_SVC --> REDIS
+    API -->|SELECT| PG_SVC
+    PG_SVC --> PG
+    CONSUMER -->|XREADGROUP| REDIS_SVC
+    CONSUMER -->|INSERT/UPDATE| PG_SVC
+
+    classDef frontend fill:#667eea,color:#fff
+    classDef api fill:#764ba2,color:#fff
+    classDef consumer fill:#f093fb,color:#fff
+    classDef data fill:#4facfe,color:#fff
+    classDef gateway fill:#43e97b,color:#fff
+
+    class FE,FE_SVC frontend
+    class API,API_SVC api
+    class CONSUMER consumer
+    class REDIS,REDIS_SVC,PG,PG_SVC data
+    class GATEWAY gateway
 ```
 
-**Event Flow:**
-1. User votes via frontend
-2. API validates and writes to Redis Stream (XADD)
-3. Consumer Deployment reads via consumer group (XREADGROUP)
-4. Consumer aggregates votes in PostgreSQL (increment_vote function)
-5. API serves results with 2-second caching
-6. Frontend displays current counts/percentages
+### Event Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant API
+    participant Redis
+    participant Consumer
+    participant PostgreSQL
+
+    User->>Frontend: Click vote (cats/dogs)
+    Frontend->>API: POST /api/vote {option: "cats"}
+    API->>API: Validate input
+    API->>Redis: XADD votes {vote, timestamp, id}
+    Redis-->>API: Message ID
+    API-->>Frontend: 201 Created
+    Frontend->>Frontend: Show confirmation
+    Frontend->>API: GET /api/results
+
+    Note over Consumer,Redis: Consumer runs continuously
+    Consumer->>Redis: XREADGROUP votes-group
+    Redis-->>Consumer: Batch of messages
+    Consumer->>Consumer: Validate & process
+    Consumer->>PostgreSQL: Call increment_vote(option)
+    PostgreSQL-->>Consumer: Success
+    Consumer->>Redis: XACK message
+
+    API->>PostgreSQL: SELECT cats, dogs FROM votes
+    PostgreSQL-->>API: {cats: 151, dogs: 100}
+    API->>API: Calculate percentages
+    API-->>Frontend: {cats: 151, dogs: 100}
+    Frontend->>Frontend: Update progress bars
+```
+
+**Key Design Decisions:**
+1. **4-namespace isolation:** Security boundaries between layers (ADR-0004)
+2. **Redis Streams:** Event log with consumer groups (ADR-0002)
+3. **Non-root containers:** All services run as unprivileged users
+4. **Gateway API:** Rate limiting and ingress (ADR-0005)
+5. **Consumer as Deployment:** Continuous processing, not batch Job
 
 ## Quick Start
 
