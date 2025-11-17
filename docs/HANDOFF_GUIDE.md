@@ -229,6 +229,12 @@ We decided to [decision]. Please update:
 
 ## Version Control
 
+**AI Assistant Rules:**
+- ❌ NO "Generated with Claude Code" or similar AI attribution in commits
+- ❌ NO "Co-Authored-By: Claude" footers
+- ❌ NO "Modified by Claude" or AI references in file comments
+- ✅ Clean code only, standard Conventional Commits format
+
 **Before committing:**
 1. Ensure CHANGELOG.md updated (if releasing)
 2. Session log created for work done

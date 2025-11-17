@@ -206,8 +206,45 @@
   - [x] Helm template: renders successfully
 
 ## Phase 3: Frontend (High Priority)
-- [ ] TypeScript app multistage Dockerfile (nginx serving static files)
-- [ ] Voting buttons UI (Cats vs Dogs, side-by-side)
+
+**Decisions Made:**
+1. ✅ API URL: K8s ConfigMap + runtime config.js (mounted as volume, frontend fetches before init)
+2. ✅ Build tool: Vite (modern, fast)
+3. ✅ Dev workflow: Minikube only (production-like, no docker-compose)
+
+**Note:** Configuration server (Consul, Spring Cloud Config) documented in tech-to-review.md as future improvement
+
+- [x] TypeScript app multistage Dockerfile (nginx serving static files) - Completed 2025-11-17
+  - [x] Create frontend/package.json with React 18, TypeScript, Vite dependencies
+  - [x] Create frontend/tsconfig.json with strict mode, ES2020 target, React JSX
+  - [x] Create frontend/.dockerignore excluding node_modules, dist, .git
+  - [x] Create frontend/nginx.conf with SPA routing (try_files), gzip compression, security headers
+  - [x] Write Dockerfile stage 1: Builder (node:20-alpine, install deps, run vite build)
+  - [x] Write Dockerfile stage 2: Runtime (nginx:1.25-alpine, copy dist/, expose 8080, non-root)
+  - [x] Create frontend/vite.config.ts with build optimizations (minify, chunk size limits)
+  - [x] Test build locally: `docker build -t frontend:0.2.0 frontend/` ✓ Built in 922ms
+  - [x] Test runtime: Container serves index.html on port 8080 ✓
+  - [x] Verify image size: 75.6MB (acceptable, includes React bundle)
+  - [x] Verify non-root: UID 1000 (appuser) ✓
+  - [x] Verify SPA routing: /vote returns 200 OK (not 404) ✓
+- [x] Voting buttons UI (Cats vs Dogs, side-by-side) - Completed 2025-11-17
+  - [x] Create `frontend/src/components/VoteButtons.tsx` with TypeScript interface
+  - [x] Define props type: `{ onVote: (option: 'cats' | 'dogs') => void, disabled?: boolean }`
+  - [x] Implement two button elements with onClick handlers calling onVote
+  - [x] Add CSS module `VoteButtons.module.css` with side-by-side flexbox layout
+  - [x] Add responsive breakpoint (@media max-width: 768px) for vertical stacking
+  - [x] Implement disabled state styling (opacity 0.5, cursor not-allowed)
+  - [x] Add hover/focus styles (scale transform, border highlight)
+  - [x] Add ARIA attributes (aria-label, role="button" if not using <button>)
+  - [x] Implement keyboard navigation (Tab focus, Enter/Space triggers vote)
+  - [x] Add loading state prop to disable buttons during API call
+  - [x] Create basic component test (renders, click calls onVote, disabled prevents click)
+  - [x] Manual test: buttons render, responsive works, keyboard accessible
+  - [x] Integrated into App.tsx with state management
+  - [x] Built and tested Docker image: frontend:0.3.0 (bundle 140KB gzip)
+  - [x] Updated helm/values.yaml: frontend.tag: "0.3.0"
+  - [x] Added CSS module type definitions (vite-env.d.ts)
+  - [x] Verified security headers and non-root execution (UID 1000)
 - [ ] Results display component (percentages, counts, top half)
 - [ ] API integration (fetch for voting/results)
 - [ ] Optional: Server-Sent Events for live updates

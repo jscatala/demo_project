@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cats vs Dogs Voting App - Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        /* Results Section */
+        .results {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .results h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+
+        .result-item {
+            margin-bottom: 25px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            text-transform: uppercase;
+        }
+
+        .result-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .result-count {
+            text-align: right;
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Voting Section */
+        .voting {
+            text-align: center;
+        }
+
+        .voting h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        .vote-button {
+            flex: 1;
+            max-width: 300px;
+            padding: 40px 30px;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, #667eea, #764ba2) border-box;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .vote-button:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .vote-button:active {
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        .vote-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .vote-button .emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .vote-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .vote-button {
+                max-width: 100%;
+                padding: 30px 20px;
+            }
+
+            .vote-button .emoji {
+                font-size: 3rem;
+            }
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐱 Cats vs Dogs 🐶</h1>
+        <p class="subtitle">Cast your vote and see the results!</p>
+
+        <!-- Results Section -->
+        <div class="results">
+            <h2>Current Results</h2>
+
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="result-label">🐱 Cats</span>
+                    <span class="result-percentage">66.7%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 66.7%;">
+                        <span>2,345 votes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="result-label">🐶 Dogs</span>
+                    <span class="result-percentage">33.3%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 33.3%;">
+                        <span>1,172 votes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-count">Total votes: 3,517</div>
+        </div>
+
+        <!-- Voting Section -->
+        <div class="voting">
+            <h2>Make Your Choice</h2>
+            <div class="vote-buttons">
+                <button class="vote-button" aria-label="Vote for cats">
+                    <span class="emoji">🐱</span>
+                    <span>Cats</span>
+                </button>
+                <button class="vote-button" aria-label="Vote for dogs">
+                    <span class="emoji">🐶</span>
+                    <span>Dogs</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Your vote is anonymous • Results update in real-time</p>
+        </div>
+    </div>
+
+    <script>
+        // Interactive mockup functionality
+        const buttons = document.querySelectorAll('.vote-button');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                buttons.forEach(b => b.disabled = true);
+                this.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                this.style.color = 'white';
+                setTimeout(() => {
+                    alert('Vote recorded! (This is just a mockup)');
+                    buttons.forEach(b => b.disabled = false);
+                    this.style.background = '';
+                    this.style.color = '#333';
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

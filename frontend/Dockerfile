@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -9,11 +9,12 @@ COPY package*.json ./
 # Install dependencies (including dev dependencies needed for build)
 RUN npm install
 
-# Copy source code
+# Copy source code and config
+COPY tsconfig.json vite.config.ts index.html ./
 COPY public/ ./public/
 COPY src/ ./src/
 
-# Build application
+# Build application with Vite
 RUN npm run build
 
 # Production stage
@@ -24,8 +25,8 @@ RUN addgroup -g 1000 appgroup && \
     adduser -D -u 1000 -G appgroup appuser && \
     chown -R appuser:appgroup /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx
 
-# Copy built assets from builder
-COPY --from=builder --chown=appuser:appgroup /app/build /usr/share/nginx/html
+# Copy built assets from builder (Vite outputs to dist/)
+COPY --from=builder --chown=appuser:appgroup /app/dist /usr/share/nginx/html
 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf

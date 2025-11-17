@@ -1,0 +1,125 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.app-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+  padding-top: 40px;
+}
+
+.app-header h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  font-weight: 500;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  padding: 60px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.vote-confirmation {
+  margin-bottom: 30px;
+  padding: 20px 30px;
+  background: #d4edda;
+  border: 2px solid #28a745;
+  border-radius: 10px;
+  color: #155724;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reset-button {
+  margin-top: 30px;
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.reset-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.reset-button:active {
+  transform: translateY(0);
+}
+
+.app-footer {
+  text-align: center;
+  color: white;
+  padding: 30px 20px 20px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.app-footer p {
+  margin: 5px 0;
+}
+
+.api-info {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .app-main {
+    padding: 40px 20px;
+  }
+
+  .vote-confirmation {
+    font-size: 1rem;
+    padding: 15px 20px;
+  }
+}

@@ -4,7 +4,7 @@
 images:
   frontend:
     repository: frontend
-    tag: "0.1.0"
+    tag: "0.3.0"
     pullPolicy: IfNotPresent
 
   api:
