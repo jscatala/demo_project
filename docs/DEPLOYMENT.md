@@ -162,6 +162,177 @@ See [Issue #0004](issues/0004-minikube-local-image-loading.md) for details.
 
 ---
 
+## Image Loading: Why It's Not Needed
+
+**TL;DR:** Our approach builds images INSIDE Minikube's Docker daemon, so no loading step is required.
+
+### Two Approaches Explained
+
+#### Approach A: Direct Build in Minikube (Current - Recommended)
+
+**What we do:**
+```bash
+# 1. Point Docker CLI to Minikube's daemon
+eval $(minikube docker-env -p demo-project--dev)
+
+# 2. Build images (goes directly to Minikube)
+docker build -t frontend:0.5.0 frontend/
+docker build -t api:0.3.2 api/
+docker build -t consumer:0.3.0 consumer/
+
+# 3. Deploy with Helm (images already available)
+helm install voting-app ./helm -f helm/values-local.yaml
+```
+
+**Why no loading?**
+- `eval $(minikube docker-env)` redirects Docker commands to Minikube's Docker daemon
+- Images are built directly inside Minikube
+- Kubernetes can see them immediately
+- `imagePullPolicy: IfNotPresent` prevents pull attempts
+
+**Pros:**
+- ✅ Faster (one-step process)
+- ✅ Images automatically available to Kubernetes
+- ✅ No duplicate storage
+- ✅ Used by our scripts (`deploy-local.sh`)
+
+**Cons:**
+- ⚠️ Must run `eval $(minikube docker-env)` in each new terminal
+- ⚠️ Build cache lives in Minikube (deleted with profile)
+- ⚠️ Can't build images if Minikube is stopped
+
+---
+
+#### Approach B: Build on Host + Load (Alternative)
+
+**Alternative workflow:**
+```bash
+# 1. Build on host Docker (normal)
+docker build -t frontend:0.5.0 frontend/
+
+# 2. Load into Minikube
+minikube image load frontend:0.5.0 -p demo-project--dev
+minikube image load api:0.3.2 -p demo-project--dev
+minikube image load consumer:0.3.0 -p demo-project--dev
+
+# 3. Deploy with Helm
+helm install voting-app ./helm -f helm/values-local.yaml
+```
+
+**When to use:**
+- Need to build images without Minikube running
+- Want to keep build cache on host machine
+- Prefer explicit image transfer step
+
+**Pros:**
+- ✅ Build cache persists on host
+- ✅ Can build images offline
+- ✅ Clear separation (build vs deploy)
+
+**Cons:**
+- ❌ Extra step (slower)
+- ❌ Doubles disk usage (host + Minikube)
+- ❌ More commands to remember
+- ❌ Must reload after each rebuild
+
+**Note:** See [Issue #0004](issues/0004-minikube-local-image-loading.md) for detailed analysis of both approaches.
+
+---
+
+### Verification: Where Are My Images?
+
+**Check Minikube's Docker:**
+```bash
+# Point to Minikube
+eval $(minikube docker-env -p demo-project--dev)
+
+# List images
+docker images | grep -E "frontend|api|consumer"
+
+# Expected output:
+# frontend    0.5.0    [ID]   [TIME]   75.6MB
+# api         0.3.2    [ID]   [TIME]   166MB
+# consumer    0.3.0    [ID]   [TIME]   223MB
+```
+
+**Check host Docker (for comparison):**
+```bash
+# Reset Docker to host
+unset DOCKER_HOST DOCKER_TLS_VERIFY DOCKER_CERT_PATH DOCKER_API_VERSION
+
+# List images
+docker images | grep -E "frontend|api|consumer"
+
+# If using Approach A (direct build):
+# No output (images only in Minikube)
+
+# If using Approach B (build + load):
+# Shows images on both host and Minikube
+```
+
+**Verify images in Minikube (alternative method):**
+```bash
+# SSH into Minikube and check
+minikube ssh -p demo-project--dev "docker images | grep -E 'frontend|api|consumer'"
+```
+
+---
+
+### Troubleshooting: Images Not Found
+
+**Symptom:** Pods show `ImagePullBackOff` or `ErrImagePull`
+
+**Diagnosis:**
+```bash
+# Check if you're using Minikube's Docker
+echo $DOCKER_HOST
+# Expected: tcp://127.0.0.1:[PORT] (Minikube)
+# If empty: Using host Docker (WRONG)
+
+# Verify images exist in Minikube
+eval $(minikube docker-env -p demo-project--dev)
+docker images | grep frontend
+```
+
+**Solutions:**
+
+1. **Forgot to run `eval $(minikube docker-env)`:**
+   ```bash
+   # Rebuild with correct Docker
+   eval $(minikube docker-env -p demo-project--dev)
+   docker build -t frontend:0.5.0 frontend/
+   ```
+
+2. **Built with host Docker by mistake:**
+   ```bash
+   # Option A: Reload images (quick)
+   minikube image load frontend:0.5.0 -p demo-project--dev
+
+   # Option B: Rebuild in Minikube (better)
+   eval $(minikube docker-env -p demo-project--dev)
+   docker build -t frontend:0.5.0 frontend/
+   ```
+
+3. **Wrong imagePullPolicy:**
+   ```yaml
+   # helm/values-local.yaml should have:
+   images:
+     frontend:
+       pullPolicy: IfNotPresent  # NOT "Always"
+   ```
+
+4. **Wrong profile/context:**
+   ```bash
+   # Ensure using correct profile
+   kubectl config current-context
+   # Expected: demo-project--dev
+
+   # Switch if needed
+   kubectl config use-context demo-project--dev
+   ```
+
+---
+
 ## Deploy with Helm
 
 ### 1. Create values-local.yaml (Optional)
