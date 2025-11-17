@@ -450,6 +450,39 @@ BEGIN
     RETURN NEXT;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_vote_results()
+RETURNS TABLE(
+    option VARCHAR(10),
+    count INTEGER,
+    percentage NUMERIC(5,2),
+    updated_at TIMESTAMP WITH TIME ZONE
+) AS $$
+DECLARE
+    total_votes INTEGER;
+BEGIN
+    -- Calculate total votes
+    SELECT SUM(votes.count) INTO total_votes FROM votes;
+
+    -- Prevent division by zero
+    IF total_votes IS NULL OR total_votes = 0 THEN
+        total_votes := 0;
+    END IF;
+
+    -- Return results with percentages
+    RETURN QUERY
+    SELECT
+        v.option,
+        v.count,
+        CASE
+            WHEN total_votes = 0 THEN 0.00
+            ELSE ROUND((v.count::NUMERIC / total_votes::NUMERIC) * 100, 2)
+        END AS percentage,
+        v.updated_at
+    FROM votes v
+    ORDER BY v.option;
+END;
+$$ LANGUAGE plpgsql;
 EOF
 
 # Start API with connections to test services
@@ -479,11 +512,11 @@ curl -X POST http://localhost:8000/api/vote \
 # Response: {"status": "success", "option": "cats"}
 ```
 
-- [ ] POST /api/vote accepts valid vote (cats)
-- [ ] POST /api/vote accepts valid vote (dogs)
-- [ ] POST /api/vote rejects invalid option (422)
-- [ ] POST /api/vote writes to Redis Stream
-- [ ] Structured logging for votes
+- [X] POST /api/vote accepts valid vote (cats)
+- [X] POST /api/vote accepts valid vote (dogs)
+- [X] POST /api/vote rejects invalid option (422)
+- [X] POST /api/vote writes to Redis Stream
+- [X] Structured logging for votes
 
 **5.2 GET /api/results Endpoint**
 
@@ -500,11 +533,11 @@ curl http://localhost:8000/api/results
 # }
 ```
 
-- [ ] GET /api/results returns vote counts
-- [ ] Response includes percentages
-- [ ] Response includes timestamps
-- [ ] Cache-Control header present (max-age=2)
-- [ ] Caching reduces database load
+- [X] GET /api/results returns vote counts
+- [X] Response includes percentages
+- [X] Response includes timestamps
+- [X] Cache-Control header present (max-age=2)
+- [X] Caching reduces database load
 
 **5.3 CORS Validation**
 
@@ -522,11 +555,11 @@ curl -X OPTIONS http://localhost:8000/api/vote \
 # access-control-max-age: 600
 ```
 
-- [ ] CORS preflight succeeds for allowed origin
-- [ ] CORS rejects untrusted origins
-- [ ] Allowed methods: GET, POST, OPTIONS
-- [ ] Allowed headers restricted (not *)
-- [ ] Preflight cache: 600 seconds
+- [X] CORS preflight succeeds for allowed origin
+- [X] CORS rejects untrusted origins
+- [X] Allowed methods: GET, POST, OPTIONS
+- [X] Allowed headers restricted (not *)
+- [X] Preflight cache: 600 seconds
 
 **5.4 Request Size Limit**
 
@@ -540,8 +573,8 @@ dd if=/dev/zero bs=1M count=2 | curl -X POST http://localhost:8000/api/vote \
 # Expected: 413 Payload Too Large
 ```
 
-- [ ] Requests >1MB rejected with 413
-- [ ] Request size limit configurable via MAX_REQUEST_SIZE
+- [X] Requests >1MB rejected with 413
+- [X] Request size limit configurable via MAX_REQUEST_SIZE
 
 **Cleanup after Section 5 tests:**
 ```bash
@@ -568,9 +601,9 @@ kubectl logs -n voting-consumer consumer-XXXXX | grep "consumer_group"
 # {"event": "consumer_group_exists", "stream": "votes", "group": "vote-processors"}
 ```
 
-- [ ] Consumer creates consumer group on startup
-- [ ] Handles existing consumer group gracefully
-- [ ] Uses XGROUP CREATE with MKSTREAM
+- [X] Consumer creates consumer group on startup
+- [X] Handles existing consumer group gracefully
+- [X] Uses XGROUP CREATE with MKSTREAM
 
 **6.2 Message Processing**
 
@@ -586,11 +619,11 @@ kubectl logs -n voting-consumer consumer-XXXXX | grep "vote_processed"
 # {"event": "vote_processed", "option": "cats", "new_count": N}
 ```
 
-- [ ] Consumer reads messages from Redis Stream
-- [ ] Parses vote field correctly
-- [ ] Calls increment_vote() PostgreSQL function
-- [ ] Logs processing events
-- [ ] Acknowledges (XACK) messages after processing
+- [X] Consumer reads messages from Redis Stream
+- [X] Parses vote field correctly
+- [X] Calls increment_vote() PostgreSQL function
+- [X] Logs processing events
+- [X] Acknowledges (XACK) messages after processing
 
 **6.3 Error Handling**
 
@@ -607,10 +640,10 @@ kubectl logs -n voting-consumer consumer-XXXXX | grep "malformed"
 # {"event": "malformed_message_missing_vote", "message_id": "...", "level": "warning"}
 ```
 
-- [ ] Malformed messages logged and skipped
-- [ ] Invalid vote options rejected (not cats/dogs)
-- [ ] Database errors retried 3 times
-- [ ] Exponential backoff on retries
+- [X] Malformed messages logged and skipped
+- [X] Invalid vote options rejected (not cats/dogs)
+- [X] Database errors retried 3 times
+- [X] Exponential backoff on retries
 
 **6.4 Graceful Shutdown**
 
@@ -629,10 +662,10 @@ kubectl logs -n voting-consumer consumer-XXXXX | tail -20
 # {"event": "consumer_shutdown_complete"}
 ```
 
-- [ ] SIGTERM signal handled gracefully
-- [ ] Redis client closed cleanly
-- [ ] PostgreSQL pool closed cleanly
-- [ ] Shutdown logging present
+- [X] SIGTERM signal handled gracefully
+- [X] Redis client closed cleanly
+- [X] PostgreSQL pool closed cleanly
+- [X] Shutdown logging present
 
 ---
 
@@ -687,10 +720,10 @@ ls -l docs/sessions/ | grep "2025-11-16"
 # (or similar session logs for consumer work)
 ```
 
-- [ ] Session logs created for Phase 2 work
-- [ ] Logs include what was implemented
-- [ ] Logs include decisions made
-- [ ] Next steps documented
+- [X] Session logs created for Phase 2 work
+- [X] Logs include what was implemented
+- [X] Logs include decisions made
+- [X] Next steps documented
 
 **8.2 README Updates**
 
@@ -704,9 +737,9 @@ grep "Phase 2" README.md
 # - Current versions (api:0.3.2, consumer:0.3.0)
 ```
 
-- [ ] README reflects Phase 2 completion
-- [ ] Current versions documented
-- [ ] Architecture updated if needed
+- [X] README reflects Phase 2 completion
+- [X] Current versions documented
+- [X] Architecture updated if needed
 
 **8.3 Todos Tracking**
 
@@ -717,10 +750,10 @@ grep "## Phase 2:" -A 50 todos.md | grep "\[x\]" | wc -l
 # Should show all Phase 2 tasks marked complete
 ```
 
-- [ ] All Phase 2 tasks marked complete
-- [ ] Consumer Dockerfile task complete
-- [ ] Consumer implementation task complete
-- [ ] Consumer deployment task complete
+- [X] All Phase 2 tasks marked complete
+- [X] Consumer Dockerfile task complete
+- [X] Consumer implementation task complete
+- [X] Consumer deployment task complete
 
 **8.4 Validation Document**
 
@@ -731,9 +764,9 @@ ls -l docs/PHASE2_VALIDATION.md
 # Expected: This file
 ```
 
-- [ ] PHASE2_VALIDATION.md created
-- [ ] Follows PHASE1_VALIDATION.md format
-- [ ] Comprehensive checklist
+- [X] PHASE2_VALIDATION.md created
+- [X] Follows PHASE1_VALIDATION.md format
+- [X] Comprehensive checklist
 
 ---
 
