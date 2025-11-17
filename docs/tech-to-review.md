@@ -206,6 +206,212 @@ Reference links and resources for technologies used in the project.
 
 ---
 
+## Trivy
+
+**What:** Open-source container security scanner that detects vulnerabilities (CVEs), misconfigurations, secrets, and license issues in container images, filesystems, and Kubernetes manifests.
+
+**Why:** Automated security validation for container images. Catches security issues before deployment, integrates into CI/CD pipelines, provides actionable remediation guidance.
+
+**Status:** In use (Phase 4+)
+
+**Resources:**
+- Official docs: https://aquasecurity.github.io/trivy/
+- Installation: https://aquasecurity.github.io/trivy/latest/getting-started/installation/
+- CI/CD integration: https://aquasecurity.github.io/trivy/latest/tutorials/integrations/
+- Docker Hub: https://hub.docker.com/r/aquasec/trivy
+
+**Key features:**
+- **Vulnerability scanning:** Detects CVEs in OS packages and application dependencies
+- **Misconfiguration detection:** Validates container/K8s security settings (UID 0, capabilities, etc.)
+- **Secret detection:** Finds hardcoded credentials, API keys, tokens
+- **License scanning:** Identifies license compliance issues in dependencies
+- **SBOM generation:** Creates Software Bill of Materials for supply chain security
+
+**Current usage in project:**
+- Docker-based execution (no local installation required)
+- Scans all 3 service images: frontend, api, consumer
+- Focus: Misconfiguration detection (non-root validation)
+- Severity filter: HIGH and CRITICAL only
+- Exit code 1 on findings (fails CI pipeline)
+- Integrated in `scripts/verify-nonroot.sh`
+
+**Scan types:**
+```bash
+# Misconfiguration scan (used in Phase 4.1)
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:latest image \
+  --scanners misconfig \
+  --severity HIGH,CRITICAL \
+  frontend:0.5.0
+
+# Vulnerability scan (CVEs in dependencies)
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:latest image \
+  --scanners vuln \
+  --severity HIGH,CRITICAL \
+  frontend:0.5.0
+
+# Combined scan (misconfig + vulnerabilities + secrets)
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:latest image \
+  --severity HIGH,CRITICAL \
+  frontend:0.5.0
+```
+
+**Alternatives considered:**
+- **Snyk:** Commercial, excellent vulnerability DB, better developer UX, requires account
+- **Grype (Anchore):** Open-source, fast, good vulnerability detection, less feature-rich
+- **Clair:** CoreOS project, good for registry integration, complex setup
+- **Docker Scout:** Docker native, easy to use, limited to Docker Hub images
+
+**Why Trivy:**
+- ✅ 100% open-source (Apache 2.0)
+- ✅ Zero configuration (works out of box)
+- ✅ Comprehensive (vulns + misconfig + secrets + SBOM)
+- ✅ Fast scanning (parallel processing)
+- ✅ No external service required (runs locally)
+- ✅ Docker-based (no local install needed)
+- ✅ CI/CD friendly (exit codes, JSON output)
+- ✅ Active maintenance (Aqua Security)
+
+**Trade-offs:**
+- ➕ Free and open-source
+- ➕ No account/registration required
+- ➕ Offline mode supported (download vulnerability DB once)
+- ➕ Multiple output formats (table, JSON, SARIF, CycloneDX)
+- ➕ K8s manifest scanning (detect issues before apply)
+- ➖ Vulnerability DB requires periodic updates (auto-updates by default)
+- ➖ False positives possible (can suppress with .trivyignore)
+- ➖ Larger image size vs specialized tools (~400MB)
+
+**Integration points:**
+- **Pre-commit hooks:** Scan images before git push
+- **GitHub Actions:** `aquasecurity/trivy-action@master`
+- **GitLab CI:** Native integration via Docker
+- **Kubernetes admission controller:** Trivy Operator scans workloads at runtime
+- **Docker registry:** Scan on push (Harbor, ECR, ACR, GCR)
+
+**Example output:**
+```
+frontend:0.5.0 (alpine 3.19.1)
+===================================
+Total: 0 (HIGH: 0, CRITICAL: 0)
+```
+
+**Decision context:**
+- Adopted in Phase 4.1 for non-root container validation
+- Chosen over Snyk for zero-cost, no-account requirement
+- Docker-based execution aligns with project's "no local install" philosophy
+- Can expand to vulnerability scanning in Phase 4.4 (same tool)
+- Consider Trivy Operator for runtime K8s scanning in production
+
+**Future enhancements:**
+- Expand to vulnerability scanning (CVE detection)
+- Add secret scanning (detect hardcoded credentials)
+- Integrate in CI/CD pipeline (GitHub Actions)
+- Generate SBOM for supply chain security compliance
+- Deploy Trivy Operator in K8s for runtime protection
+
+---
+
+## Policy-as-Code (OPA Gatekeeper / Kyverno)
+
+**What:** Kubernetes admission controllers that enforce security and operational policies declaratively. Intercepts resource creation/updates before admission, validates against policies, rejects violations automatically.
+
+**Why:** Automates security enforcement at cluster level. Eliminates manual reviews, prevents misconfigurations, provides zero-trust validation, scales policy compliance across all deployments.
+
+**Status:** Future improvement (Post-Phase 4)
+
+**Current approach:**
+- Manual Dockerfile audits for security settings
+- Manual `docker run` tests to verify non-root execution
+- No enforcement mechanism - relies on developer diligence
+- Reactive detection (find issues after merge/deploy)
+
+**Benefits of Policy-as-Code:**
+- **Proactive prevention:** Blocks insecure configs before deployment (not after)
+- **Zero-trust enforcement:** Every deployment validated, no human review needed
+- **Self-documenting:** Policy definitions = security standards in code
+- **Audit mode:** Can warn without blocking (good for gradual adoption)
+- **Git-versioned:** Policies in version control, reviewed like code
+- **Compliance:** Enforces Pod Security Standards, CIS benchmarks, custom org rules
+
+**Policy examples for this project:**
+- Block containers running as root (runAsNonRoot: true required)
+- Require all Linux capabilities dropped
+- Enforce read-only root filesystem
+- Mandate resource limits (prevent resource exhaustion)
+- Registry whitelist (only pull from approved registries)
+- Required labels (app, component, version)
+- Network policies required for each namespace
+
+**Implementation options:**
+
+### OPA Gatekeeper (Recommended for complex policies)
+- **Language:** Rego (declarative, expressive, reusable)
+- **CNCF status:** Graduated (production-ready)
+- **Strengths:** Complex logic, constraint templates, audit mode, custom violations
+- **Learning curve:** Moderate (new language)
+
+**Resources:**
+- Official docs: https://open-policy-agent.github.io/gatekeeper/
+- Policy library: https://github.com/open-policy-agent/gatekeeper-library
+- Rego playground: https://play.openpolicyagent.org/
+- OPA docs: https://www.openpolicyagent.org/docs/latest/
+
+**Key concepts:**
+- ConstraintTemplate (reusable policy definition)
+- Constraint (policy instance with parameters)
+- Audit mode (dry-run, log violations without blocking)
+- Mutation (auto-fix non-compliant configs)
+
+### Kyverno (Alternative for YAML-native teams)
+- **Language:** YAML (no new syntax to learn)
+- **CNCF status:** Incubating
+- **Strengths:** K8s-native, easy adoption, mutation rules, policy reports
+- **Learning curve:** Low (if familiar with K8s YAML)
+
+**Resources:**
+- Official docs: https://kyverno.io/docs/
+- Policy library: https://kyverno.io/policies/
+- Installation: https://kyverno.io/docs/installation/
+- Best practices: https://kyverno.io/docs/writing-policies/best-practices/
+
+**Key concepts:**
+- ClusterPolicy vs Policy (cluster-wide vs namespaced)
+- Validate, Mutate, Generate rules
+- ValidationFailureAction (Enforce vs Audit)
+- Policy reports (compliance dashboard)
+
+**Trade-offs:**
+- ➕ Zero-trust security enforcement
+- ➕ Eliminates manual security reviews
+- ➕ Prevents regressions (future deployments auto-validated)
+- ➕ Enables self-service deployments safely
+- ➕ Documents security requirements as code
+- ➖ Additional cluster component (resource overhead)
+- ➖ Learning curve (Rego for OPA, policies for Kyverno)
+- ➖ Can block legitimate deployments if too strict
+- ➖ Debugging policy violations requires understanding policy language
+
+**Decision context:**
+- Deferred until Phase 4 validation proves manual approach doesn't scale
+- Current 3 services manageable with script-based validation
+- Revisit when:
+  - Team grows (multiple developers, less security expertise)
+  - Service count increases (5+ microservices)
+  - Compliance audit required (automated evidence needed)
+  - CI/CD maturity increases (policy-as-code fits GitOps workflow)
+
+**Recommended starting point:**
+1. Install Gatekeeper in audit mode (log violations, don't block)
+2. Deploy 2-3 policies from library (non-root, no privilege escalation)
+3. Review violations for 1 week, adjust policies
+4. Switch to enforce mode after validation
+5. Expand policy coverage incrementally
+
+---
+
 ## Template for New Technologies
 
 ```markdown

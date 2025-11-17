@@ -47,3 +47,12 @@ Selector labels
 app.kubernetes.io/name: {{ include "voting.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Standard security context - enforces non-root execution
+*/}}
+{{- define "voting.securityContext" -}}
+runAsNonRoot: true
+runAsUser: 1000
+fsGroup: 1000
+{{- end }}

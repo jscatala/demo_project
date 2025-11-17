@@ -135,6 +135,9 @@ kubectl run integration-tests --image=voting-integration-tests:latest \
 
 # Run integration tests (if multi-component changes)
 ./scripts/run-integration-tests.sh  # Minikube + Helm
+
+# Verify non-root container security
+./scripts/verify-nonroot.sh  # Docker + Trivy scan
 ```
 
 ### 7. Commit Using Conventional Commits
@@ -159,6 +162,7 @@ git push origin feature/your-feature
 - ✅ All tests passing (unit + integration)
 - ✅ Coverage thresholds met
 - ✅ No security vulnerabilities
+- ✅ **Non-root container verification passed** (`./scripts/verify-nonroot.sh`)
 - ✅ Code review approval
 
 ## Testing Strategy
@@ -195,6 +199,43 @@ git push origin feature/your-feature
 4. Obtain at least one approval
 5. Squash and merge with conventional commit message
 
+## Security Validation
+
+### Pre-Deployment Checklist
+
+Before deploying changes that modify Docker images or Kubernetes manifests:
+
+```bash
+# 1. Verify all containers run as non-root
+./scripts/verify-nonroot.sh
+
+# Expected output:
+# ✓ frontend:0.5.0: Non-root user configured (UID: 1000)
+# ✓ api:0.3.2: Non-root user configured (UID: 65532)
+# ✓ consumer:0.3.0: Non-root user configured (UID: 1000)
+# ✓ All images verified as non-root
+```
+
+**The script validates:**
+- Docker image USER configuration (UID ≠ 0)
+- Trivy security scan (no HIGH/CRITICAL misconfigurations)
+- All 3 service images (frontend, api, consumer)
+
+**If script fails:**
+1. Check Dockerfile USER directive
+2. Review Trivy scan output for specific issues
+3. Fix security issues before proceeding
+4. Re-run verification
+
+### CI/CD Integration (Future)
+
+Add to GitHub Actions workflow:
+
+```yaml
+- name: Verify Non-Root Containers
+  run: ./scripts/verify-nonroot.sh
+```
+
 ## Code Review Guidelines
 
 **Reviewers should check:**
@@ -204,6 +245,7 @@ git push origin feature/your-feature
 - Documentation updated
 - No hardcoded secrets
 - Docker images are minimal and non-root
+- `./scripts/verify-nonroot.sh` passes for image changes
 
 ## Questions?
 

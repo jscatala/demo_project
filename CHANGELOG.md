@@ -8,9 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project structure
-- Architecture decision records
-- Development conventions documentation
+- Non-root container validation script (`scripts/verify-nonroot.sh`)
+- Trivy container security scanner integration (Docker-based, no local install)
+- Helm template helper for standard securityContext (`voting.securityContext`)
+- Security validation documentation in CONTRIBUTING.md
+- Policy-as-Code documentation (OPA Gatekeeper/Kyverno) in tech-to-review.md
+- Trivy documentation in tech-to-review.md
+
+### Security
+- Validated all containers run as non-root (frontend: UID 1000, api: UID 65532, consumer: UID 1000)
+- Automated security scanning with Trivy (misconfiguration detection)
+- Zero HIGH/CRITICAL security findings in all images
+
+### Changed
+- Updated README.md phase badge to 4.1 complete
+- Enhanced CONTRIBUTING.md with pre-deployment security checklist
 
 ## [0.1.0-dev] - 2025-11-15
 

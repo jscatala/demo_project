@@ -331,7 +331,17 @@
 - Container runs as UID 1000 (non-root) ✓
 
 ## Phase 4: Security & Hardening (High Priority)
-- [ ] Non-root containers for all services
+- [x] Validate and enforce non-root container execution for all services (completed 2025-11-17)
+  - [x] Audit current Dockerfile USER directives (frontend, api, consumer) - document actual UIDs in audit log
+  - [x] Verify frontend/Dockerfile runs as non-root - test: `docker run --rm frontend:0.5.0 whoami` outputs non-root user (UID 1000)
+  - [x] Verify api/Dockerfile runs as non-root - test: `docker inspect api:0.3.2` outputs UID 65532 (distroless nonroot)
+  - [x] Verify consumer/Dockerfile runs as non-root - test: `docker run --rm consumer:0.3.0 id` shows UID 1000
+  - [x] Add securityContext.runAsNonRoot validation to helm/templates/_helpers.tpl - created voting.securityContext template
+  - [x] Audit helm/templates/*/deployment.yaml for runAsNonRoot directives - all 3 deployments verified with runAsNonRoot: true
+  - [x] Install Trivy container scanner - using Docker image aquasec/trivy:latest (no local install)
+  - [x] Scan all 3 images with Trivy for UID 0 processes - all passed with zero HIGH/CRITICAL misconfigurations
+  - [x] Create scripts/verify-nonroot.sh validation script - 121 lines, Docker + Trivy automation, exit code 1 on failure
+  - [x] Add non-root verification to CI/pre-deployment checklist - documented in CONTRIBUTING.md Security Validation section
 - [ ] Input validation on all API endpoints
 - [ ] SQL injection prevention (parameterized queries)
 - [ ] Container image scanning
@@ -376,8 +386,14 @@
 - **Service Mesh:** Istio/Linkerd for advanced traffic management
 
 ### Security Enhancements
+- **Policy-as-Code (OPA Gatekeeper/Kyverno):** Automated security policy enforcement
+  - Admission controller validates all deployments against security policies
+  - Blocks insecure configs automatically (non-root, capabilities, etc.)
+  - Audit mode for gradual adoption (warn without blocking)
+  - Self-documenting security requirements as code
+  - Eliminates manual security reviews, prevents regressions
+  - See: docs/tech-to-review.md for OPA vs Kyverno comparison
 - **mTLS:** Service-to-service encryption
-- **OPA/Kyverno:** Policy enforcement
 - **Secrets Management:** HashiCorp Vault or External Secrets Operator
 - **Image Signing:** Cosign + admission controller
 
