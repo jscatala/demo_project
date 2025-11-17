@@ -1,0 +1,205 @@
+.container {
+  width: 100%;
+  padding: 30px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  margin-bottom: 40px;
+}
+
+.title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skeleton {
+  height: 80px;
+  background: linear-gradient(
+    90deg,
+    #e0e0e0 25%,
+    #f0f0f0 50%,
+    #e0e0e0 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 10px;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.loadingText {
+  text-align: center;
+  color: #667eea;
+  font-weight: 600;
+  margin-top: 10px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Error State */
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 30px;
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.errorIcon {
+  font-size: 2rem;
+}
+
+.errorText {
+  color: #856404;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.emptyState p {
+  margin: 0;
+}
+
+/* Results Grid */
+.resultsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.resultLabel {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resultPercentage {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* Progress Bar */
+.progressBar {
+  height: 40px;
+  background: #e9ecef;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  padding-left: 15px;
+  min-width: 0;
+}
+
+.progressLabel {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.resultCount {
+  text-align: right;
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+/* Total Votes */
+.totalVotes {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #dee2e6;
+  color: #333;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .resultLabel {
+    font-size: 1rem;
+  }
+
+  .resultPercentage {
+    font-size: 1.2rem;
+  }
+
+  .progressBar {
+    height: 35px;
+  }
+
+  .progressLabel {
+    font-size: 0.8rem;
+    padding-left: 10px;
+  }
+}

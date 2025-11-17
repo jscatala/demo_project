@@ -245,7 +245,26 @@
   - [x] Updated helm/values.yaml: frontend.tag: "0.3.0"
   - [x] Added CSS module type definitions (vite-env.d.ts)
   - [x] Verified security headers and non-root execution (UID 1000)
-- [ ] Results display component (percentages, counts, top half)
+- [x] Results display component (percentages, counts, top half) - Completed 2025-11-17
+  - [x] Create `frontend/src/components/VoteResults.tsx` with TypeScript interface
+  - [x] Define `VoteResultsProps` type: `{ data?: VoteData, loading?: boolean, error?: string }`
+  - [x] Define `VoteData` interface: `{ cats: number, dogs: number }` with percentage calculation logic
+  - [x] Implement component structure: container, title, two result items (cats/dogs)
+  - [x] Add percentage calculation function: `(count, total) => ((count / total) * 100).toFixed(1)`
+  - [x] Render progress bars with dynamic width based on percentage
+  - [x] Display vote counts with thousand separators (e.g., "1,234 votes")
+  - [x] Display total votes sum at bottom
+  - [x] Create `VoteResults.module.css` with progress bar styling and animations
+  - [x] Implement loading state: skeleton placeholder or spinner
+  - [x] Implement error state: error message display
+  - [x] Implement empty state: handle zero total votes (show 0% for both)
+  - [x] Add ARIA live region for dynamic updates (aria-live="polite")
+  - [x] Add CSS transition for progress bar width changes (0.5s ease)
+  - [x] Create component tests: renders data, calculates percentages, shows states
+  - [x] Integrate into App.tsx above VoteButtons
+  - [x] Manual test: verify calculations, state transitions, responsive layout
+  - [x] Built and tested Docker image: frontend:0.4.0 (bundle 6.88KB gzip)
+  - [x] Updated helm/values.yaml: frontend.tag: "0.4.0"
 - [ ] API integration (fetch for voting/results)
 - [ ] Optional: Server-Sent Events for live updates
 

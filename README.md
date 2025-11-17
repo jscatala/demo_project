@@ -1,8 +1,8 @@
 # Voting Website: Cats vs Dogs
 
-![Version](https://img.shields.io/badge/version-0.3.0--dev-blue)
+![Version](https://img.shields.io/badge/version-0.4.0--dev-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Phase](https://img.shields.io/badge/phase-2%20complete-success)
+![Phase](https://img.shields.io/badge/phase-3%20in%20progress-yellow)
 
 Event-driven voting application deployed on Kubernetes with real-time results.
 
@@ -12,7 +12,7 @@ A microservices-based voting platform where users vote between two options (Cats
 
 ## Tech Stack
 
-- **Frontend:** TypeScript, Nginx (Phase 3 - pending)
+- **Frontend:** React 18, TypeScript, Vite, Nginx v0.4.0 - Phase 3 ⏳
 - **API:** FastAPI v0.3.2 (Python) - Phase 2 ✓
 - **Event Consumer:** Python v0.3.0 (K8s Deployment) - Phase 2 ✓
 - **Data Store:** PostgreSQL 15
@@ -64,7 +64,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Project Status
 
-**Current Version:** 0.3.0-dev
+**Current Version:** 0.4.0-dev
 
 **Completed Phases:**
 - ✅ **Phase 0:** Project documentation and architecture
@@ -72,13 +72,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - ✅ **Phase 2:** Backend core (FastAPI + Consumer implementation)
 
 **In Progress:**
-- ⏳ **Phase 3:** Frontend implementation (TypeScript voting UI)
-- ⏳ **Phase 5:** Integration testing (end-to-end validation)
+- ⏳ **Phase 3:** Frontend implementation
+  - ✅ VoteButtons component (accessibility, responsive)
+  - ✅ VoteResults component (progress bars, live updates)
+  - ⬜ API integration (fetch /vote and /results)
+  - ⬜ Optional: Server-Sent Events for real-time updates
 
 **Component Versions:**
-- API: v0.3.2 (FastAPI, security hardened)
-- Consumer: v0.3.0 (Redis Streams processor)
-- Frontend: v0.1.0 (stub, pending Phase 3)
+- API: v0.3.2 (FastAPI, security hardened, Redis + PostgreSQL)
+- Consumer: v0.3.0 (Redis Streams processor, asyncpg)
+- Frontend: v0.4.0 (React 18, TypeScript, CSS modules, ARIA support)
 
 ## Documentation
 

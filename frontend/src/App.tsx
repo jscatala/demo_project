@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import VoteButtons, { VoteOption } from './components/VoteButtons';
+import VoteResults, { VoteData } from './components/VoteResults';
 import './App.css';
 
 function App() {
   const [selectedVote, setSelectedVote] = useState<VoteOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [voteData, setVoteData] = useState<VoteData>({ cats: 150, dogs: 100 });
 
   const handleVote = async (option: VoteOption) => {
     setIsLoading(true);
@@ -12,6 +14,10 @@ function App() {
 
     setTimeout(() => {
       setSelectedVote(option);
+      setVoteData((prev) => ({
+        ...prev,
+        [option]: prev[option] + 1,
+      }));
       setIsLoading(false);
     }, 1000);
   };
@@ -24,6 +30,8 @@ function App() {
       </header>
 
       <main className="app-main">
+        <VoteResults data={voteData} />
+
         {selectedVote && (
           <div className="vote-confirmation">
             <p>✅ You voted for {selectedVote === 'cats' ? '🐱 Cats' : '🐶 Dogs'}!</p>
