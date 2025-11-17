@@ -138,15 +138,30 @@ sequenceDiagram
 
 ### Installation
 
+**Quick Start (Minikube):**
 ```bash
-# Install with Helm
-helm install voting-app ./helm
+# Automated deployment script
+./scripts/deploy-local.sh --rebuild
 
-# Port forward to access locally
-kubectl port-forward svc/frontend 8080:80
+# Or manual steps:
+# 1. Start Minikube
+minikube start --cpus=4 --memory=8192
 
+# 2. Build images in Minikube
+eval $(minikube docker-env)
+docker build -t frontend:0.5.0 frontend/
+docker build -t api:0.3.2 api/
+docker build -t consumer:0.3.0 consumer/
+
+# 3. Deploy with Helm
+helm install voting-app ./helm -f helm/values-local.yaml
+
+# 4. Access application
+kubectl port-forward -n voting-frontend svc/frontend 8080:80
 # Visit http://localhost:8080
 ```
+
+**See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete guide.**
 
 ### Development
 
@@ -193,6 +208,7 @@ See documentation:
 - [CONTRIBUTING.md](CONTRIBUTING.md) - TDD workflow, conventional commits, PR process
 - [TESTING.md](docs/TESTING.md) - Testing guide, TDD examples, coverage requirements
 - [CONVENTIONS.md](docs/CONVENTIONS.md) - Code standards, atomic principles, security practices
+- [DEPLOYMENT.md](docs/DEPLOYMENT.md) - Minikube setup, Helm deployment, troubleshooting
 
 **Architecture:**
 - [Architecture Decision Records](docs/adr/) - Key architectural decisions (5 ADRs)

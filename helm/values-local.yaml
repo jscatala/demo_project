@@ -1,0 +1,72 @@
+# Local Development Overrides for Minikube
+# Usage: helm install voting-app ./helm -f helm/values-local.yaml
+
+# Use local images (built with `eval $(minikube docker-env)`)
+images:
+  frontend:
+    repository: frontend
+    tag: "0.5.0"
+    pullPolicy: IfNotPresent  # Critical: Use local images, don't pull from registry
+
+  api:
+    repository: api
+    tag: "0.3.2"
+    pullPolicy: IfNotPresent
+
+  consumer:
+    repository: consumer
+    tag: "0.3.0"
+    pullPolicy: IfNotPresent
+
+# Reduced resources for local testing
+frontend:
+  replicas: 1
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+api:
+  replicas: 1
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+consumer:
+  replicas: 1
+  streamName: "votes"
+  consumerGroup: "vote-processors"
+  batchSize: 10
+  blockMs: 5000
+  maxRetries: 3
+  logLevel: "DEBUG"  # More verbose for local debugging
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# Local database configuration
+redis:
+  url: "redis://redis.voting-data.svc.cluster.local:6379"
+
+postgresql:
+  url: "postgresql://postgres:localdev@postgres.voting-data.svc.cluster.local:5432/votes"
+
+# Development secrets (DO NOT use in production)
+secrets:
+  create: true
+  postgres:
+    user: "postgres"
+    password: "localdev"  # Insecure, local only
+  redis:
+    password: ""  # No auth for local Redis

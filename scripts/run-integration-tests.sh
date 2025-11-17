@@ -49,11 +49,15 @@ if helm list -n $NAMESPACE | grep -q $TEST_RELEASE; then
   sleep 5
 fi
 
+echo "📦 Building images in Minikube Docker..."
+eval $(minikube docker-env)
+docker build -t frontend:0.5.0 frontend/ > /dev/null 2>&1 || echo "⚠️  Frontend build failed"
+docker build -t api:0.3.2 api/ > /dev/null 2>&1 || echo "⚠️  API build failed"
+docker build -t consumer:0.3.0 consumer/ > /dev/null 2>&1 || echo "⚠️  Consumer build failed"
+
 echo "📦 Installing Helm chart..."
 helm install $TEST_RELEASE ./helm -n $NAMESPACE \
-  --set images.frontend.tag=0.5.0 \
-  --set images.api.tag=0.3.2 \
-  --set images.consumer.tag=0.3.0 \
+  -f helm/values-local.yaml \
   --wait --timeout 5m
 
 echo "✅ Deployment complete"
