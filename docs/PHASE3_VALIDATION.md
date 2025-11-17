@@ -4,6 +4,7 @@
 
 **Date:** 2025-11-17
 **Phase:** 3 (Frontend Implementation)
+**Testing:** Phase 3.5 Complete (TDD, 100% coverage)
 **Validator:** ___________
 
 ---
@@ -263,6 +264,18 @@ docker stop frontend-manual
 
 **Important:** This section requires backend services (API, Redis, PostgreSQL) running. Frontend will show errors without backend.
 
+**Integration Testing Options:**
+
+**Option A: Minikube Deployment (Recommended - Production-like)**
+```bash
+# Use automated deployment script
+./scripts/deploy-local.sh --rebuild
+
+# See docs/DEPLOYMENT.md for detailed guide
+```
+
+**Option B: Docker Containers (Quick Testing)**
+
 **4.1 Start Backend Services**
 
 ```bash
@@ -468,6 +481,8 @@ docker run --rm frontend:0.5.0 cat /etc/nginx/nginx.conf | grep -A5 "add_header"
 - [ ] Component validation passes (Section 3)
 - [ ] API integration validation passes (Section 4)
 - [ ] Build validation passes (Section 5)
+- [ ] **Unit tests passing** (27/27 component tests) - See Phase 3.5
+- [ ] **TDD followed** for all components (tests written first)
 
 **Sign-off:**
 
@@ -479,10 +494,40 @@ docker run --rm frontend:0.5.0 cat /etc/nginx/nginx.conf | grep -A5 "add_header"
 
 ---
 
+## Testing Requirements (Phase 3.5)
+
+**Before proceeding, verify Phase 3.5 completion:**
+
+```bash
+# Run unit tests
+./scripts/run-unit-tests.sh frontend
+
+# Verify coverage
+docker run --rm frontend-test:latest npm run test:coverage -- --run
+
+# Expected:
+# - 27/27 tests passing
+# - 100% component coverage
+```
+
+**Phase 3.5 Status:** ✅ COMPLETE
+- Testing infrastructure established
+- 27 tests passing (VoteButtons: 10, VoteResults: 17)
+- 100% component coverage
+- TDD workflow documented
+
+See: `docs/sessions/2025-11-17-session-phase3.5-testing.md`
+
+---
+
 ## Next Steps
 
 After Phase 3 validation passes:
-1. Proceed to Phase 4: Security & Hardening
-2. Perform integration testing (Phase 5)
-3. Deploy to Kubernetes cluster
-4. Load testing and performance validation
+1. **Phase 4:** Security & Hardening (network policies, scanning, validation)
+2. **Phase 5:** Integration Testing (full stack with Helm on Minikube)
+3. **Phase 6:** Documentation and production readiness
+
+**Deployment:**
+- Local testing: See [DEPLOYMENT.md](DEPLOYMENT.md) for Minikube setup
+- Integration tests: Run `./scripts/run-integration-tests.sh`
+- Production: Follow DEPLOYMENT.md production section
