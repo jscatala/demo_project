@@ -62,26 +62,44 @@ helm version         # v3.14+
 
 ### 1. Start Minikube
 
+**Using dedicated profile (recommended):**
 ```bash
-# Start with recommended resources
-minikube start --cpus=4 --memory=8192 --driver=docker
+# Start with project-specific profile
+minikube start -p demo-project--dev \
+  --cpus=4 \
+  --memory=8192 \
+  --driver=docker \
+  --kubernetes-version=stable
 
 # Verify cluster
-kubectl cluster-info
+kubectl cluster-info --context demo-project--dev
 kubectl get nodes
+
+# Set as default context (optional)
+kubectl config use-context demo-project--dev
+```
+
+**Profile benefits:**
+- Isolates project from other Minikube clusters
+- Dedicated resources and configuration
+- Easy cleanup: `minikube delete -p demo-project--dev`
+
+**Default profile (alternative):**
+```bash
+# Start default profile
+minikube start --cpus=4 --memory=8192 --driver=docker
 ```
 
 ### 2. Enable Addons (Optional but Recommended)
 
 ```bash
-# Metrics server (for resource monitoring)
+# Using profile (recommended)
+minikube addons enable metrics-server -p demo-project--dev
+minikube addons enable ingress -p demo-project--dev
+minikube addons enable dashboard -p demo-project--dev
+
+# Or without profile (if using default)
 minikube addons enable metrics-server
-
-# Ingress (for Gateway API alternative)
-minikube addons enable ingress
-
-# Dashboard (for GUI monitoring)
-minikube addons enable dashboard
 ```
 
 ### 3. Configure Docker Environment
@@ -89,14 +107,17 @@ minikube addons enable dashboard
 **IMPORTANT:** Use Minikube's Docker daemon to build images locally.
 
 ```bash
-# Point shell to Minikube's Docker
+# Point shell to Minikube's Docker (with profile)
+eval $(minikube docker-env -p demo-project--dev)
+
+# Or default profile
 eval $(minikube docker-env)
 
 # Verify (should show Minikube's Docker)
 docker context ls
 ```
 
-**Note:** Run `eval $(minikube docker-env)` in each new terminal session.
+**Note:** Run `eval $(minikube docker-env -p demo-project--dev)` in each new terminal session.
 
 ---
 
@@ -107,8 +128,8 @@ docker context ls
 **From project root, with Minikube Docker environment active:**
 
 ```bash
-# Ensure using Minikube Docker
-eval $(minikube docker-env)
+# Ensure using Minikube Docker (with profile)
+eval $(minikube docker-env -p demo-project--dev)
 
 # Build frontend
 docker build -t frontend:0.5.0 frontend/
@@ -132,9 +153,10 @@ consumer    0.3.0    [IMAGE_ID]   [TIME]   223MB
 ```
 
 **Common Issue:** If images aren't found during deployment, ensure:
-1. You ran `eval $(minikube docker-env)` before building
-2. `imagePullPolicy: IfNotPresent` is set in values.yaml
-3. Image tags match exactly between build and values.yaml
+1. You ran `eval $(minikube docker-env -p demo-project--dev)` before building
+2. Using correct profile context
+3. `imagePullPolicy: IfNotPresent` is set in values.yaml
+4. Image tags match exactly between build and values.yaml
 
 See [Issue #0004](issues/0004-minikube-local-image-loading.md) for details.
 
@@ -540,7 +562,7 @@ kubectl port-forward -n voting-frontend svc/frontend 8080:80
 
 # 6. Cleanup
 helm uninstall voting-app
-minikube stop
+minikube stop -p demo-project--dev
 ```
 
 **Common commands:**

@@ -4,6 +4,8 @@
 
 set -e
 
+# Configuration
+MINIKUBE_PROFILE="demo-project--dev"
 REBUILD=${1:-}
 NAMESPACE_PREFIX="voting"
 RELEASE_NAME="voting-app"
@@ -26,11 +28,16 @@ if ! command -v helm &> /dev/null; then
 fi
 
 # Check Minikube status
-if ! minikube status &> /dev/null; then
-  echo "⚠️  Minikube not running. Starting..."
-  minikube start --cpus=4 --memory=8192 --driver=docker
+if ! minikube status -p $MINIKUBE_PROFILE &> /dev/null; then
+  echo "⚠️  Minikube profile '$MINIKUBE_PROFILE' not running. Starting..."
+  minikube start -p $MINIKUBE_PROFILE \
+    --cpus=4 \
+    --memory=8192 \
+    --driver=docker \
+    --kubernetes-version=stable
+  echo "✅ Minikube profile '$MINIKUBE_PROFILE' started"
 else
-  echo "✅ Minikube running"
+  echo "✅ Minikube profile '$MINIKUBE_PROFILE' running"
 fi
 
 # Build images if requested
@@ -40,7 +47,7 @@ if [ "$REBUILD" = "--rebuild" ]; then
   echo "Using Minikube Docker environment"
 
   # Use Minikube's Docker daemon
-  eval $(minikube docker-env)
+  eval $(minikube docker-env -p $MINIKUBE_PROFILE)
 
   echo "  Building frontend:0.5.0..."
   docker build -t frontend:0.5.0 frontend/ > /dev/null 2>&1
@@ -59,8 +66,8 @@ fi
 
 # Verify images exist
 echo ""
-echo "🔍 Verifying images in Minikube..."
-eval $(minikube docker-env)
+echo "🔍 Verifying images in Minikube profile '$MINIKUBE_PROFILE'..."
+eval $(minikube docker-env -p $MINIKUBE_PROFILE)
 
 if ! docker images | grep -q "frontend.*0.5.0"; then
   echo "❌ frontend:0.5.0 not found in Minikube Docker"
@@ -112,7 +119,7 @@ echo "Port forward frontend:"
 echo "  kubectl port-forward -n voting-frontend svc/frontend 8080:80"
 echo ""
 echo "Or use Minikube service:"
-echo "  minikube service frontend -n voting-frontend"
+echo "  minikube service frontend -n voting-frontend -p $MINIKUBE_PROFILE"
 echo ""
 echo "Then visit: http://localhost:8080"
 

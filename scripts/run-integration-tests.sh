@@ -5,8 +5,13 @@
 
 set -e
 
+# Configuration
+MINIKUBE_PROFILE="demo-project--dev"
+
 echo "🔧 Integration Tests (Minikube + Helm)"
 echo "======================================"
+echo "Profile: $MINIKUBE_PROFILE"
+echo ""
 
 # Check prerequisites
 echo "📋 Checking prerequisites..."
@@ -27,9 +32,16 @@ if ! command -v helm &> /dev/null; then
 fi
 
 # Check Minikube status
-if ! minikube status &> /dev/null; then
-  echo "⚠️  Minikube not running. Starting..."
-  minikube start
+if ! minikube status -p $MINIKUBE_PROFILE &> /dev/null; then
+  echo "⚠️  Minikube profile '$MINIKUBE_PROFILE' not running. Starting..."
+  minikube start -p $MINIKUBE_PROFILE \
+    --cpus=4 \
+    --memory=8192 \
+    --driver=docker \
+    --kubernetes-version=stable
+  echo "✅ Minikube profile started"
+else
+  echo "✅ Minikube profile running"
 fi
 
 echo "✅ Prerequisites OK"
@@ -50,7 +62,7 @@ if helm list -n $NAMESPACE | grep -q $TEST_RELEASE; then
 fi
 
 echo "📦 Building images in Minikube Docker..."
-eval $(minikube docker-env)
+eval $(minikube docker-env -p $MINIKUBE_PROFILE)
 docker build -t frontend:0.5.0 frontend/ > /dev/null 2>&1 || echo "⚠️  Frontend build failed"
 docker build -t api:0.3.2 api/ > /dev/null 2>&1 || echo "⚠️  API build failed"
 docker build -t consumer:0.3.0 consumer/ > /dev/null 2>&1 || echo "⚠️  Consumer build failed"
