@@ -285,6 +285,41 @@
   - [x] Updated helm/values.yaml: frontend.tag: "0.5.0"
 - [~] Server-Sent Events for live updates (Deferred - see Future Improvements)
 
+## Phase 3.5: Testing & Validation (High Priority)
+
+**Purpose:** Set up testing infrastructure and execute Phase 3 validation protocol before proceeding to Phase 4.
+
+### Testing Infrastructure Setup
+- [ ] Install vitest and testing dependencies
+  - [ ] Add to package.json: vitest, @testing-library/react, @testing-library/user-event, @testing-library/jest-dom
+  - [ ] Configure vitest in vite.config.ts (test environment, globals, setupFiles)
+  - [ ] Create vitest.setup.ts with @testing-library/jest-dom imports
+  - [ ] Add test scripts to package.json: "test", "test:ui", "coverage"
+- [ ] Run existing test suites
+  - [ ] Execute VoteButtons.test.tsx (10 test cases)
+  - [ ] Execute VoteResults.test.tsx (20+ test cases)
+  - [ ] Verify all tests pass
+  - [ ] Fix any failing tests
+- [ ] Add test coverage reporting
+  - [ ] Configure coverage thresholds (80% minimum)
+  - [ ] Generate coverage report (HTML + terminal)
+  - [ ] Review uncovered code paths
+- [ ] Update Dockerfile to skip test files in production build (already done via tsconfig exclude)
+
+### Phase 3 Validation Execution
+- [ ] Execute PHASE3_VALIDATION.md protocol
+  - [ ] Section 1: Pre-flight checks (images, source files, build config)
+  - [ ] Section 2: Container validation (startup, HTTP, SPA routing, assets)
+  - [ ] Section 3: Component validation (browser testing, accessibility)
+  - [ ] Section 4: API integration (backend setup, vote flow, error handling)
+  - [ ] Section 5: Build validation (bundle size, security headers)
+- [ ] Document validation results
+  - [ ] Create validation-results.md or update PHASE3_VALIDATION.md with results
+  - [ ] Note any issues found and resolutions
+  - [ ] Sign off validation checklist
+- [ ] Fix any issues discovered during validation
+- [ ] Re-run failed checks after fixes
+
 ## Phase 4: Security & Hardening (High Priority)
 - [ ] Non-root containers for all services
 - [ ] Input validation on all API endpoints
