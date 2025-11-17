@@ -1,25 +1,27 @@
 import { useState } from 'react';
 import VoteButtons, { VoteOption } from './components/VoteButtons';
-import VoteResults, { VoteData } from './components/VoteResults';
+import VoteResults from './components/VoteResults';
+import { useVote } from './hooks/useVote';
+import { useResults } from './hooks/useResults';
 import './App.css';
 
 function App() {
   const [selectedVote, setSelectedVote] = useState<VoteOption | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [voteData, setVoteData] = useState<VoteData>({ cats: 150, dogs: 100 });
+
+  const { data: resultsData, isLoading: resultsLoading, error: resultsError, refetch } = useResults();
+  const { vote, isLoading: voteLoading, error: voteError, clearError } = useVote(() => {
+    refetch();
+  });
 
   const handleVote = async (option: VoteOption) => {
-    setIsLoading(true);
-    console.log(`Vote submitted: ${option}`);
+    clearError();
+    await vote(option);
+    setSelectedVote(option);
+  };
 
-    setTimeout(() => {
-      setSelectedVote(option);
-      setVoteData((prev) => ({
-        ...prev,
-        [option]: prev[option] + 1,
-      }));
-      setIsLoading(false);
-    }, 1000);
+  const handleVoteAgain = () => {
+    setSelectedVote(null);
+    clearError();
   };
 
   return (
@@ -30,9 +32,20 @@ function App() {
       </header>
 
       <main className="app-main">
-        <VoteResults data={voteData} />
+        <VoteResults
+          data={resultsData ? { cats: resultsData.cats, dogs: resultsData.dogs } : undefined}
+          loading={resultsLoading}
+          error={resultsError || undefined}
+        />
 
-        {selectedVote && (
+        {voteError && (
+          <div className="error-message" role="alert">
+            <span className="error-icon">⚠️</span>
+            <p>{voteError}</p>
+          </div>
+        )}
+
+        {selectedVote && !voteError && (
           <div className="vote-confirmation">
             <p>✅ You voted for {selectedVote === 'cats' ? '🐱 Cats' : '🐶 Dogs'}!</p>
           </div>
@@ -40,14 +53,14 @@ function App() {
 
         <VoteButtons
           onVote={handleVote}
-          disabled={selectedVote !== null}
-          loading={isLoading}
+          disabled={selectedVote !== null && !voteError}
+          loading={voteLoading}
         />
 
         {selectedVote && (
           <button
             className="reset-button"
-            onClick={() => setSelectedVote(null)}
+            onClick={handleVoteAgain}
           >
             Vote Again
           </button>
@@ -55,7 +68,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Frontend v0.2.0 • Vite + TypeScript + React 18</p>
+        <p>Frontend v0.5.0 • Vite + TypeScript + React 18</p>
         <p className="api-info">
           API: {(window as any).APP_CONFIG?.API_URL || 'Not configured'}
         </p>

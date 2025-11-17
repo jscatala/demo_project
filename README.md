@@ -1,6 +1,6 @@
 # Voting Website: Cats vs Dogs
 
-![Version](https://img.shields.io/badge/version-0.4.0--dev-blue)
+![Version](https://img.shields.io/badge/version-0.5.0--dev-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Phase](https://img.shields.io/badge/phase-3%20in%20progress-yellow)
 
@@ -64,7 +64,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Project Status
 
-**Current Version:** 0.4.0-dev
+**Current Version:** 0.5.0-dev
 
 **Completed Phases:**
 - ✅ **Phase 0:** Project documentation and architecture
@@ -75,13 +75,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - ⏳ **Phase 3:** Frontend implementation
   - ✅ VoteButtons component (accessibility, responsive)
   - ✅ VoteResults component (progress bars, live updates)
-  - ⬜ API integration (fetch /vote and /results)
+  - ✅ API integration (custom hooks, error handling, refetch)
   - ⬜ Optional: Server-Sent Events for real-time updates
 
 **Component Versions:**
 - API: v0.3.2 (FastAPI, security hardened, Redis + PostgreSQL)
 - Consumer: v0.3.0 (Redis Streams processor, asyncpg)
-- Frontend: v0.4.0 (React 18, TypeScript, CSS modules, ARIA support)
+- Frontend: v0.5.0 (React 18, TypeScript, custom hooks, API integration)
 
 ## Documentation
 

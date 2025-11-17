@@ -265,7 +265,24 @@
   - [x] Manual test: verify calculations, state transitions, responsive layout
   - [x] Built and tested Docker image: frontend:0.4.0 (bundle 6.88KB gzip)
   - [x] Updated helm/values.yaml: frontend.tag: "0.4.0"
-- [ ] API integration (fetch for voting/results)
+- [x] API integration (fetch for voting/results) - Completed 2025-11-17
+  - [x] Create `frontend/src/services/api.ts` with base URL configuration from `window.APP_CONFIG?.API_URL`
+  - [x] Define TypeScript interfaces: `VoteRequest`, `VoteResponse`, `ResultsResponse` in `types/api.ts`
+  - [x] Implement `postVote(option: VoteOption): Promise<VoteResponse>` function with error handling
+  - [x] Implement `getResults(): Promise<ResultsResponse>` function with error handling
+  - [x] Add generic error handler: map HTTP status codes to user messages (404, 500, 503, network errors)
+  - [x] Create custom hook `useVote()` returning `{ vote, isLoading, error }` for VoteButtons
+  - [x] Create custom hook `useResults()` returning `{ data, isLoading, error, refetch }` for VoteResults
+  - [x] Update App.tsx: integrated useVote and useResults hooks
+  - [x] Results auto-fetch on component mount via useResults
+  - [x] Add POST /vote success handler: refetch results after successful vote
+  - [x] Add error display in App.tsx with error-message styling
+  - [x] Error handling: network failures, HTTP status codes, API_URL undefined
+  - [x] Loading states: VoteButtons and VoteResults display loading skeletons
+  - [x] Vote confirmation message shows after successful submission
+  - [x] "Vote Again" button clears errors and allows re-voting
+  - [x] Built and tested Docker image: frontend:0.5.0 (9.05KB gzip bundle)
+  - [x] Updated helm/values.yaml: frontend.tag: "0.5.0"
 - [ ] Optional: Server-Sent Events for live updates
 
 ## Phase 4: Security & Hardening (High Priority)
