@@ -22,7 +22,7 @@ A microservices-based voting platform where users vote between two options (Cats
 
 ## UI Preview
 
-![Voting Interface](frontend/mockup.html)
+**[View Interactive Mockup](frontend/mockup.html)** - Open in browser to see the voting interface
 
 **Features:**
 - Side-by-side voting buttons (Cats vs Dogs)
@@ -30,7 +30,7 @@ A microservices-based voting platform where users vote between two options (Cats
 - Responsive design (mobile stacks vertically)
 - Full accessibility (ARIA, keyboard navigation)
 
-> **Note:** Open `frontend/mockup.html` in a browser to see interactive mockup
+> **Note:** The mockup is a fully interactive HTML page demonstrating the UI without backend dependencies
 
 ## Architecture
 
