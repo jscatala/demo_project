@@ -22,8 +22,8 @@ docker images | grep frontend | grep 0.5.0
 # frontend   0.5.0   [IMAGE_ID]   [TIME]   ~76MB
 ```
 
-- [ ] frontend:0.5.0 image exists
-- [ ] Image size within expected range (~76MB)
+- [X] frontend:0.5.0 image exists
+- [X] Image size within expected range (~76MB)
 
 **1.2 Verify Source Files**
 
@@ -42,11 +42,11 @@ ls -l frontend/src/types/
 # Types: api.ts
 ```
 
-- [ ] VoteButtons component files present
-- [ ] VoteResults component files present
-- [ ] Custom hooks present (useVote, useResults)
-- [ ] API service and types present
-- [ ] All TypeScript files have .ts/.tsx extension
+- [X] VoteButtons component files present
+- [X] VoteResults component files present
+- [X] Custom hooks present (useVote, useResults)
+- [X] API service and types present
+- [X] All TypeScript files have .ts/.tsx extension
 
 **1.3 Verify Build Output**
 
@@ -58,9 +58,9 @@ cat frontend/vite.config.ts | grep -E "(build|minify)"
 cat frontend/package.json | grep -E "(build|dev)"
 ```
 
-- [ ] Vite configuration exists
-- [ ] Build script configured (tsc && vite build)
-- [ ] Dev script configured (vite)
+- [X] Vite configuration exists
+- [X] Build script configured (tsc && vite build)
+- [X] Dev script configured (vite)
 
 ---
 
@@ -94,10 +94,10 @@ docker exec frontend-test id
 docker stop frontend-test
 ```
 
-- [ ] Frontend container starts successfully
-- [ ] nginx process running
-- [ ] Container runs as UID 1000 (non-root)
-- [ ] No startup errors in logs
+- [X] Frontend container starts successfully
+- [X] nginx process running
+- [X] Container runs as UID 1000 (non-root)
+- [X] No startup errors in logs
 
 **2.2 Test HTTP Response**
 
@@ -122,10 +122,10 @@ curl -I http://localhost:8080
 docker stop frontend-test
 ```
 
-- [ ] Returns HTTP 200 OK
-- [ ] Content-Type is text/html
-- [ ] Security headers present (X-Frame-Options, CSP, etc.)
-- [ ] Server header shows nginx/1.25.5
+- [X] Returns HTTP 200 OK
+- [X] Content-Type is text/html
+- [X] Security headers present (X-Frame-Options, CSP, etc.)
+- [X] Server header shows nginx/1.25.5
 
 **2.3 Test SPA Routing**
 
@@ -143,9 +143,9 @@ curl -I http://localhost:8080/some-random-path
 docker stop frontend-test
 ```
 
-- [ ] /vote returns 200 OK (not 404)
-- [ ] Random paths return 200 OK (SPA fallback to index.html)
-- [ ] nginx correctly configured for SPA routing
+- [X] /vote returns 200 OK (not 404)
+- [X] Random paths return 200 OK (SPA fallback to index.html)
+- [X] nginx correctly configured for SPA routing
 
 **2.4 Test Static Asset Serving**
 
@@ -165,6 +165,7 @@ curl -s http://localhost:8080 | head -20
 # <link rel="stylesheet" crossorigin href="/assets/index-[hash].css">
 
 # Test asset loading (check for 200, not 404)
+#ERROR -P not recognized
 ASSET_JS=$(curl -s http://localhost:8080 | grep -oP 'src="/assets/index-\K[^"]+')
 ASSET_CSS=$(curl -s http://localhost:8080 | grep -oP 'href="/assets/index-\K[^"]+')
 
@@ -177,10 +178,10 @@ curl -I http://localhost:8080/assets/index-${ASSET_CSS}
 docker stop frontend-test
 ```
 
-- [ ] index.html serves correctly
-- [ ] JavaScript assets return 200 OK
-- [ ] CSS assets return 200 OK
-- [ ] Asset hashes present (cache busting)
+- [X] index.html serves correctly
+- [X] JavaScript assets return 200 OK
+- [X] CSS assets return 200 OK
+- [X] Asset hashes present (cache busting)
 
 ---
 
@@ -195,17 +196,19 @@ docker stop frontend-test
 docker run --rm -d --name frontend-manual -p 8080:8080 frontend:0.5.0
 
 # Open in browser: http://localhost:8080
+
+#ERROR: API URL not configured
 ```
 
 **3.2 Test VoteButtons Component**
 
-- [ ] Two voting buttons visible (Cats, Dogs)
-- [ ] Buttons display side-by-side on desktop
-- [ ] Buttons stack vertically on mobile (<768px)
-- [ ] Hover effect: scale transform and color change
-- [ ] Click triggers loading state (button disabled)
-- [ ] Keyboard navigation works (Tab, Enter, Space)
-- [ ] ARIA labels present (inspect with screen reader or devtools)
+- [X] Two voting buttons visible (Cats, Dogs)
+- [X] Buttons display side-by-side on desktop
+- [X] Buttons stack vertically on mobile (<768px)
+- [X] Hover effect: scale transform and color change
+- [X] Click triggers loading state (button disabled)
+- [X] Keyboard navigation works (Tab, Enter, Space)
+- [X] ARIA labels present (inspect with screen reader or devtools)
 
 **3.3 Test VoteResults Component**
 

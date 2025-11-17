@@ -58,37 +58,134 @@ BREAKING CHANGE: Vote endpoint now requires PUT instead of POST
 - `bugfix/redis-connection-leak`
 - `docs/update-deployment-guide`
 
-## Development Workflow
+## Development Workflow (TDD Required)
 
-1. **Create branch** from `main`
-   ```bash
-   git checkout -b feature/your-feature
-   ```
+**Test-Driven Development (TDD) is mandatory for all new features.**
 
-2. **Make changes** following conventions in [CONVENTIONS.md](docs/CONVENTIONS.md)
+### 1. Create Branch
+```bash
+git checkout -b feature/your-feature
+```
 
-3. **Commit** using conventional commits
-   ```bash
-   git commit -m "feat(frontend): add live results via SSE"
-   ```
+### 2. Write Tests First (🔴 Red)
+**Before writing implementation code:**
 
-4. **Test locally**
-   ```bash
-   helm install test-release ./helm
-   # Run integration tests
-   ```
+**Unit Tests (Docker):**
+```bash
+# Frontend: Create component test
+touch frontend/src/components/YourComponent.test.tsx
 
-5. **Push and create PR**
-   ```bash
-   git push origin feature/your-feature
-   ```
+# API: Create endpoint test
+touch api/tests/test_your_endpoint.py
 
-6. **PR Requirements:**
-   - Descriptive title (conventional commit format)
-   - Description of changes
-   - Tests passing
-   - No security vulnerabilities
-   - Code review approval
+# Consumer: Create processor test
+touch consumer/tests/test_your_processor.py
+```
+
+**Integration Tests (Minikube):**
+```bash
+# Create integration test for multi-component flows
+touch tests/integration/test_vote_flow.py
+```
+
+### 3. Run Tests - Verify Failure
+**Unit tests:**
+```bash
+# Frontend
+docker build -f frontend/Dockerfile.test -t frontend-test .
+docker run --rm frontend-test:latest npm test -- --run
+
+# API
+docker build -f api/Dockerfile.test -t api-test .
+docker run --rm api-test:latest pytest tests/
+
+# Consumer
+docker build -f consumer/Dockerfile.test -t consumer-test .
+docker run --rm consumer-test:latest pytest tests/
+```
+
+**Integration tests:**
+```bash
+# Deploy to Minikube
+helm install voting-test ./helm -f helm/values-test.yaml
+
+# Run integration tests
+kubectl run integration-tests --image=voting-integration-tests:latest \
+  --restart=Never --rm -it
+```
+
+### 4. Implement Code (🟢 Green)
+**Write minimal code to make tests pass:**
+- Follow conventions in [CONVENTIONS.md](docs/CONVENTIONS.md)
+- Keep functions atomic (single responsibility)
+- Implement only what's needed for tests
+
+### 5. Refactor (🔵 Refactor)
+**Improve code while keeping tests passing:**
+- Optimize performance
+- Improve readability
+- Extract reusable functions
+- Update documentation
+
+### 6. Verify All Tests Pass
+**Before committing:**
+```bash
+# Run all unit tests
+./scripts/run-unit-tests.sh  # Docker-based
+
+# Run integration tests (if multi-component changes)
+./scripts/run-integration-tests.sh  # Minikube + Helm
+```
+
+### 7. Commit Using Conventional Commits
+```bash
+git commit -m "feat(frontend): add live results via SSE
+
+- Add SSE connection hook
+- Create EventSource client
+- Update results on vote events
+- Tests: 15 unit, 3 integration (all passing)"
+```
+
+### 8. Push and Create PR
+```bash
+git push origin feature/your-feature
+```
+
+### 9. PR Requirements
+- ✅ Descriptive title (conventional commit format)
+- ✅ Description of changes
+- ✅ **Tests written BEFORE implementation (TDD)**
+- ✅ All tests passing (unit + integration)
+- ✅ Coverage thresholds met
+- ✅ No security vulnerabilities
+- ✅ Code review approval
+
+## Testing Strategy
+
+### When to Use Docker Tests (Unit)
+- **Single component** functionality
+- **Fast execution** required (<5s)
+- **No external dependencies** (or mocked)
+- Examples: Component rendering, API validation, utility functions
+
+### When to Use Minikube Tests (Integration)
+- **Multi-component** interactions
+- **Real dependencies** needed (Redis, PostgreSQL, etc.)
+- **End-to-end flows**
+- Examples: Vote submission flow, event processing, database updates
+
+### Test Coverage Requirements
+**Minimum thresholds (enforced in CI):**
+- Components: 95% (statements, functions, lines, branches)
+- API endpoints: 90%
+- Consumer processors: 90%
+- Utilities: 100%
+
+**Integration tests:**
+- Critical user flows: 100%
+- Error scenarios: 100%
+- Edge cases: 80%
 
 ## Pull Request Process
 

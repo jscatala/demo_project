@@ -19,6 +19,122 @@ Standards and best practices for code, security, and infrastructure.
 - **Tags:** `v1.0.0`, `v1.2.3-beta`
 - **Changelog:** Keep a Changelog format
 
+## Test-Driven Development (TDD)
+
+**Mandatory for all new features:** Write tests BEFORE implementation.
+
+### TDD Cycle
+
+1. **🔴 Red:** Write a failing test
+2. **🟢 Green:** Write minimal code to pass
+3. **🔵 Refactor:** Improve code while keeping tests passing
+
+### Testing Tiers
+
+**Tier 1: Unit Tests (Docker)**
+- **Scope:** Single component in isolation
+- **Environment:** Docker container
+- **Speed:** Fast (<5s)
+- **Examples:**
+  - Frontend components (vitest)
+  - API endpoints (pytest)
+  - Utility functions
+
+**Tier 2: Integration Tests (Minikube + Helm)**
+- **Scope:** Multi-component interactions
+- **Environment:** Minikube cluster with Helm
+- **Speed:** Medium (30s-2min)
+- **Examples:**
+  - Frontend → API flow
+  - API → Redis → Consumer → PostgreSQL
+  - End-to-end vote submission
+
+**Tier 3: System Tests (Minikube + Helm)**
+- **Scope:** Full system behavior
+- **Environment:** Complete Helm deployment
+- **Speed:** Slow (2-5min)
+- **Examples:**
+  - Load testing
+  - Failure recovery
+  - Security validation
+
+### Testing Commands
+
+**Unit Tests (Docker):**
+```bash
+# Frontend component tests
+docker run --rm frontend-test:latest npm test -- --run
+
+# API unit tests
+docker run --rm api-test:latest pytest tests/unit/
+
+# Consumer unit tests
+docker run --rm consumer-test:latest pytest tests/unit/
+```
+
+**Integration Tests (Minikube):**
+```bash
+# Deploy full stack
+helm install voting-test ./helm -f helm/values-test.yaml
+
+# Run integration tests
+kubectl run integration-tests --image=voting-integration-tests:latest \
+  --restart=Never --rm -it
+
+# Cleanup
+helm uninstall voting-test
+```
+
+### Validation Phase Requirements
+
+**Before marking a phase complete:**
+1. ✅ All unit tests passing (Docker)
+2. ✅ All integration tests passing (Minikube) - if multi-component
+3. ✅ Coverage thresholds met
+4. ✅ Validation protocol executed
+5. ✅ Session log documented
+
+### TDD Example Workflow
+
+**Example: Adding POST /vote endpoint**
+
+```python
+# Step 1: RED - Write failing test
+def test_vote_endpoint_accepts_cats():
+    response = client.post("/api/vote", json={"option": "cats"})
+    assert response.status_code == 201
+    # Test fails - endpoint doesn't exist yet
+
+# Step 2: GREEN - Minimal implementation
+@app.post("/api/vote", status_code=201)
+async def vote(request: VoteRequest):
+    return {"status": "ok"}
+    # Test passes - minimal code
+
+# Step 3: REFACTOR - Improve while tests pass
+@app.post("/api/vote", status_code=201)
+async def vote(request: VoteRequest):
+    await redis_client.xadd("votes", {"vote": request.option})
+    return {"status": "accepted", "vote": request.option}
+    # Tests still pass - better implementation
+```
+
+### TDD Anti-Patterns
+
+**❌ DON'T:**
+- Write implementation first, tests later
+- Skip tests for "simple" code
+- Test only happy paths
+- Mock everything (integration tests need real dependencies)
+- Run tests manually (automate in Docker/CI)
+
+**✅ DO:**
+- Write test first, see it fail
+- Test edge cases and errors
+- Use real dependencies for integration tests
+- Run full test suite before commit
+- Keep tests fast and focused
+
 ## Atomic Principles
 
 ### Atomic Functions
