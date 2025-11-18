@@ -1,0 +1,29 @@
+{{- if .Values.networkPolicies.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-allow-ingress
+  namespace: voting-frontend
+  labels:
+    {{- include "voting.labels" . | nindent 4 }}
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: frontend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    # Allow from Istio gateway (if using Istio)
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    # OR allow from nginx ingress (if using nginx-ingress)
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 80
+{{- end }}

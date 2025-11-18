@@ -602,6 +602,110 @@ pytest tests/test_vote.py::test_vote_validation_property -v
 
 ---
 
+## Calico (CNI)
+
+**What:** Kubernetes CNI (Container Network Interface) plugin providing networking and network security for containerized applications.
+
+**Why:** Industry-standard CNI with full NetworkPolicy support. Required for enforcing network isolation policies between pods and namespaces.
+
+**Status:** ✅ In use (Phase 4.5+)
+
+**Resources:**
+- Official docs: https://docs.tigera.io/calico/latest/about/
+- NetworkPolicy guide: https://docs.tigera.io/calico/latest/network-policy/
+- Installation: https://docs.tigera.io/calico/latest/getting-started/kubernetes/
+- Troubleshooting: https://docs.tigera.io/calico/latest/operations/troubleshoot/
+
+**Key features:**
+- **NetworkPolicy enforcement**: Kubernetes native policies (ingress/egress rules)
+- **IP Address Management (IPAM)**: Automatic pod IP allocation
+- **BGP routing**: Scalable L3 networking (optional)
+- **Calico Network Policies**: Extended CRDs with more granular controls (namespaceSelector, serviceAccountSelector)
+- **calicoctl**: CLI tool for advanced policy management and debugging
+
+**Installed version:** v3.27.0
+
+**Verification:**
+```bash
+# Check Calico pods
+kubectl get pods -n kube-system -l k8s-app=calico-node
+kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
+
+# Verify NetworkPolicy CRDs
+kubectl api-resources | grep networkpolicies
+```
+
+---
+
+## Cilium (Future CNI Migration)
+
+**What:** Next-generation CNI powered by eBPF (extended Berkeley Packet Filter), providing advanced networking, observability, and security.
+
+**Why:** Superior performance, L7 network policies, built-in observability (Hubble), and service mesh capabilities without sidecars.
+
+**Status:** 🔮 Future improvement (Post-Phase 6)
+
+**Resources:**
+- Official docs: https://docs.cilium.io/en/stable/
+- Getting started: https://docs.cilium.io/en/stable/gettingstarted/
+- Hubble observability: https://docs.cilium.io/en/stable/observability/
+- L7 policies: https://docs.cilium.io/en/stable/security/policy/language/#layer-7-examples
+- Migration from Calico: https://docs.cilium.io/en/stable/installation/cni-chaining/
+
+**Key advantages over Calico:**
+- **eBPF-based**: Kernel-level networking (faster, lower overhead)
+- **Hubble UI**: Visual network traffic observability (see all pod-to-pod flows in real-time)
+- **L7 NetworkPolicy**: HTTP/gRPC method/path filtering (e.g., allow only `GET /api/results`)
+- **Service Mesh**: Built-in without sidecars (vs Istio's proxy overhead)
+- **Cluster Mesh**: Multi-cluster networking without VPN
+- **Advanced telemetry**: Prometheus metrics, distributed tracing integration
+
+**Migration considerations:**
+- **Complexity**: More moving parts than Calico (requires learning eBPF concepts)
+- **Kubernetes version**: Requires kernel 4.9+ with eBPF support
+- **Downtime**: Migration requires pod restart (drain nodes gradually)
+- **Monitoring**: Hubble adds observability value for complex microservices (future benefit)
+
+**Recommended migration timeline:**
+- **Phase 6+**: After basic NetworkPolicy validation with Calico
+- **Trigger**: When need L7 policies (HTTP path filtering) or advanced observability
+- **ROI**: Higher for production clusters with >10 microservices
+
+**Example L7 Policy (Cilium-specific):**
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: api-l7-policy
+spec:
+  endpointSelector:
+    matchLabels:
+      app: api
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: frontend
+    toPorts:
+    - ports:
+      - port: "8000"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET"
+          path: "/api/results"
+        - method: "POST"
+          path: "/api/vote"
+```
+
+**Next steps for migration:**
+1. Complete Phase 4.5 NetworkPolicy testing with Calico
+2. Validate all policies work as expected
+3. Research Cilium Hubble UI for observability value
+4. Decide if L7 policies needed (HTTP path filtering)
+5. Plan migration during low-traffic window
+
+---
+
 ## Template for New Technologies
 
 ```markdown

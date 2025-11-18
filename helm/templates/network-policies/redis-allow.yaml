@@ -1,0 +1,35 @@
+{{- if .Values.networkPolicies.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-allow-api-consumer
+  namespace: voting-data
+  labels:
+    {{- include "voting.labels" . | nindent 4 }}
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    # Allow from API namespace
+    - namespaceSelector:
+        matchLabels:
+          name: voting-api
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: api
+    # Allow from Consumer namespace
+    - namespaceSelector:
+        matchLabels:
+          name: voting-consumer
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: consumer
+    ports:
+    - protocol: TCP
+      port: 6379
+{{- end }}

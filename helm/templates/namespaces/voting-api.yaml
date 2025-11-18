@@ -3,6 +3,7 @@ kind: Namespace
 metadata:
   name: voting-api
   labels:
+    name: voting-api  # Required for NetworkPolicy selectors
     app.kubernetes.io/name: voting-app
     app.kubernetes.io/component: api
     app.kubernetes.io/part-of: voting-system

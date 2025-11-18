@@ -72,3 +72,13 @@ secrets:
     password: "postgres"  # CHANGE IN PRODUCTION
   redis:
     password: ""  # Empty for no auth (development only)
+
+# Network Policies configuration
+# SECURITY: NetworkPolicy enforcement requires CNI support (Calico, Cilium, Weave)
+networkPolicies:
+  enabled: false  # Set to true to enable NetworkPolicy enforcement
+  # CNI detection (for documentation purposes)
+  cni: calico  # Options: calico, cilium, weave
+  # Policy strategy
+  defaultDeny: true  # Default deny all ingress
+  allowDNS: true     # Allow all pods to reach kube-dns
