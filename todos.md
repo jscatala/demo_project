@@ -362,7 +362,16 @@
   - [x] Document findings and verification evidence (4/4 queries audited, all safe, triple-layer defense documented)
   - [x] Update CHANGELOG.md with Phase 4.3 SQL security audit results - documented in Security section
   - [x] Mark Phase 4.3 complete in todos.md - Phase 4.3 complete ✓
-- [ ] Container image scanning
+- [x] Container image vulnerability scanning (Trivy) - completed 2025-11-17
+  - [x] Build/verify all 3 production images exist locally (frontend:0.5.0, api:0.3.2, consumer:0.3.0) - ✅ All images verified
+  - [x] Scan frontend:0.5.0 for vulnerabilities (Trivy image scan, save output) - 18 HIGH/CRITICAL (Alpine 3.19.1 EOL)
+  - [x] Scan api:0.3.2 for vulnerabilities (Trivy image scan, save output) - 7 HIGH/CRITICAL (2 fixable Python packages)
+  - [x] Scan consumer:0.3.0 for vulnerabilities (Trivy image scan, save output) - 0 HIGH/CRITICAL (CLEAN)
+  - [x] Analyze scan results (count vulnerabilities by severity: CRITICAL, HIGH, MEDIUM, LOW) - Analysis complete
+  - [x] Document findings in vulnerability report (create docs/VULNERABILITY_SCAN.md or extend docs) - Created comprehensive docs/VULNERABILITY_SCAN.md
+  - [x] Create remediation plan for HIGH/CRITICAL findings (if any found) - Detailed remediation plan included in report
+  - [x] Update CHANGELOG.md with Phase 4.4 vulnerability scan results - Updated Security section
+  - [x] Mark Phase 4.4 complete in todos.md - Phase 4.4 complete ✓
 - [ ] Network policies between services
 
 ## Phase 5: Integration (Medium Priority)
