@@ -25,21 +25,23 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: 65532
+        fsGroup: 65532
       containers:
       - name: api
-        image: api:0.1.0
-        imagePullPolicy: IfNotPresent
+        image: {{ .Values.images.api.repository }}:{{ .Values.images.api.tag }}
+        imagePullPolicy: {{ .Values.images.api.pullPolicy }}
         ports:
         - name: http
           containerPort: 8000
           protocol: TCP
         env:
         - name: REDIS_URL
-          value: "redis://redis.voting-data.svc.cluster.local:6379"
+          value: {{ .Values.redis.url | quote }}
         - name: DATABASE_URL
-          value: "postgresql://postgres:postgres@postgres.voting-data.svc.cluster.local:5432/votes"
+          value: {{ .Values.postgresql.url | quote }}
+        - name: CORS_ORIGINS
+          value: {{ .Values.api.corsOrigins | default "http://localhost:3000" | quote }}
         resources:
           requests:
             memory: "256Mi"

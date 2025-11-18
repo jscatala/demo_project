@@ -51,11 +51,11 @@ async def process_message(message_id: str, message_data: dict) -> bool:
     """
     try:
         # Extract vote from message
-        vote = message_data.get("vote")
+        vote = message_data.get("option")
 
         if not vote:
             logger.warning(
-                "malformed_message_missing_vote",
+                "malformed_message_missing_option",
                 message_id=message_id,
                 data=message_data
             )
