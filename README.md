@@ -49,7 +49,7 @@ graph TB
     end
 
     subgraph "voting-consumer namespace"
-        CONSUMER[Consumer Deployment<br/>Python v0.3.0<br/>UID 1000]
+        CONSUMER[Consumer Deployment<br/>Python v0.3.1<br/>UID 1000]
     end
 
     subgraph "voting-data namespace"
