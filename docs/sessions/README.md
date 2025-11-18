@@ -133,55 +133,88 @@ Filename: `YYYY-MM-DD-session-NN-brief-description.md`
   - Test results: 19/28 passing (68%), coverage 56% (up from 33%)
 - Status: ✓ Completed - **PHASE 4.2 COMPLETE**
 
+**Session 14 - Phase 4.3-4.5 Security Hardening (SQL, Vulnerabilities, Network Policies)**
+- File: `2025-11-17-session-phase4.3-4.5-security-hardening.md`
+- Phases: 4.3 ✓ (SQL Injection), 4.4 ✓ (Vulnerability Scanning), 4.5 🟡 (Network Policies - In Progress)
+- Focus: SQL injection prevention, container vulnerability scanning, NetworkPolicy infrastructure
+- Key achievements:
+  - SQL injection audit: 4/4 database queries verified safe (100% parameterized)
+  - Vulnerability scanning: 3 images scanned, 25 vulnerabilities identified, remediation plan created
+  - Calico CNI v3.27.0 installed for NetworkPolicy enforcement
+  - Created 6 NetworkPolicy templates (12 policies total): default deny + 5 allow rules
+  - Documentation: NETWORK_POLICY.md (800+ lines), VULNERABILITY_SCAN.md (345 lines)
+  - Cilium documented as future improvement (Post-Phase 6)
+- Status: Phase 4.3 ✓ | Phase 4.4 ✓ | Phase 4.5 🟡 (8/14 tasks, 57%)
+
 ---
 
 ## Quick Resume
 
-**Latest session:** `2025-11-17-session-phase4.2-validation-audit.md`
+**Latest session:** `2025-11-17-session-phase4.3-4.5-security-hardening.md`
 
-**Phase 4.2 Status:** COMPLETE ✓
+**Phase Status:**
+- Phase 4.3 (SQL Injection Prevention): ✓ COMPLETE
+- Phase 4.4 (Container Vulnerability Scanning): ✓ COMPLETE
+- Phase 4.5 (Network Policies): 🟡 IN PROGRESS (8/14 tasks)
 
 **Completed in this session:**
-- Comprehensive input validation audit (18-scenario matrix)
-- Docker-based test infrastructure (api/Dockerfile.test)
-- Lifespan mocking fix (session-scoped conftest.py fixtures)
-- High-priority security tests (4/4 passing)
-- Property-based testing documentation
 
-**Test Results:**
-- 19/28 tests passing (68%)
-- 4/4 high-priority security tests passing (100%)
-- Coverage: 56% (up from 33%)
-- Docker test infrastructure: api-test:latest
+**Phase 4.3 (SQL):**
+- Audited all 4 database queries (100% safe)
+- Extended VALIDATION.md with SQL Security section
+- Verified triple-layer defense (Pydantic → asyncpg → logic)
 
-**Security Validation:**
-- SQL injection protection: ✓ (Pydantic Literal type)
-- XSS protection: ✓ (Pydantic validation)
-- Oversized payload protection: ✓ (Middleware size limits)
-- Malformed JSON handling: ✓ (FastAPI 422 errors)
+**Phase 4.4 (Vulnerabilities):**
+- Scanned 3 container images with Trivy
+- Frontend: 18 HIGH/CRITICAL (Alpine 3.19.1 EOL)
+- API: 7 HIGH/CRITICAL (2 Python packages fixable)
+- Consumer: 0 HIGH/CRITICAL (CLEAN)
+- Created comprehensive remediation plan
+
+**Phase 4.5 (Network Policies):**
+- Installed Calico v3.27.0 CNI
+- Created 6 NetworkPolicy YAML templates (12 policies total)
+- Documented traffic flows and security boundaries
+- Added Cilium as future improvement
+
+**Security Improvements:**
+- SQL injection: 100% protected (verified)
+- Container vulnerabilities: 25 identified, remediation plan documented
+- Network isolation: 12 NetworkPolicy resources ready for deployment
 
 **Files Created:**
-- api/Dockerfile.test
-- api/tests/conftest.py
-- api/docs/VALIDATION.md (600+ lines)
-- docs/sessions/2025-11-17-session-phase4.2-validation-audit.md
+- docs/NETWORK_POLICY.md (800+ lines)
+- docs/VULNERABILITY_SCAN.md (345 lines)
+- helm/templates/network-policies/ (6 files, 12 policies)
+- docs/sessions/2025-11-17-session-phase4.3-4.5-security-hardening.md
 
 **Files Modified:**
-- api/tests/test_vote.py (+96 lines, 4 security tests)
-- api/requirements.txt (added pytest-cov)
-- api/.dockerignore (allow tests/ directory)
-- docs/tech-to-review.md (+187 lines, property-based testing)
+- api/docs/VALIDATION.md (+200 lines SQL section)
+- docs/tech-to-review.md (+105 lines Calico + Cilium)
+- helm/values.yaml (networkPolicies config)
+- helm/templates/namespaces/ (4 files, added name labels)
+- CHANGELOG.md, README.md, todos.md
+
+**Git Commits:**
+- 830ed5d: Phase 4.3 SQL injection prevention
+- 4d5d1bc: Phase 4.4 vulnerability scanning
+- 8e109f2: HANDOFF_GUIDE AI attribution rules
+- 18e0de7: Phase 4.5 NetworkPolicy infrastructure
 
 **Next session should:**
-- Continue Phase 4.3 (SQL injection prevention - parameterized queries)
-- Container image scanning with Trivy
-- Network policies between services
+- Deploy application (Phase 5: Integration)
+- Enable NetworkPolicy enforcement (networkPolicies.enabled: true)
+- Run integration tests with policies active
+- Create connectivity validation script
+- Complete Phase 4.5 remaining tasks (6/14)
 
 **Reference:**
 ```
-Last session: @docs/sessions/2025-11-17-session-phase4.2-validation-audit.md
+Last session: @docs/sessions/2025-11-17-session-phase4.3-4.5-security-hardening.md
 Current todos: @Demo_project/todos.md
-Phase 4.2: COMPLETE ✓
+Phase 4.3: COMPLETE ✓
+Phase 4.4: COMPLETE ✓
+Phase 4.5: IN PROGRESS (8/14 tasks, 57%)
 
-Next: Phase 4.3 (SQL injection prevention)
+Next: Phase 5 (Integration) + Phase 4.5 completion
 ```
