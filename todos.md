@@ -354,7 +354,14 @@
   - [x] Document validation gaps in api/docs/VALIDATION.md (if gaps found) - 12 gaps identified (67%), property-based testing recommended
   - [x] Run test suite and verify 100% validation test coverage - Docker-based test infrastructure created, 19/28 tests passing (high-priority 4/4 passing)
   - [x] Update CHANGELOG.md with validation audit results - pending final update
-- [ ] SQL injection prevention (parameterized queries)
+- [x] SQL injection prevention audit (parameterized queries) - completed 2025-11-17
+  - [x] Audit API database queries (api/services/results_service.py) - ✅ PASS: 1 query, stored procedure, no user input
+  - [x] Audit consumer database queries (consumer/db_client.py, consumer/main.py) - ✅ PASS: 1 query, asyncpg $1 parameterized
+  - [x] Search codebase for unsafe SQL patterns (grep for f-strings, % formatting in .execute() calls) - ✅ PASS: Zero unsafe patterns found
+  - [x] Document SQL security patterns (extended VALIDATION.md with 200+ line SQL security section)
+  - [x] Document findings and verification evidence (4/4 queries audited, all safe, triple-layer defense documented)
+  - [x] Update CHANGELOG.md with Phase 4.3 SQL security audit results - documented in Security section
+  - [x] Mark Phase 4.3 complete in todos.md - Phase 4.3 complete ✓
 - [ ] Container image scanning
 - [ ] Network policies between services
 

@@ -1,14 +1,15 @@
-# API Input Validation Coverage
+# API Input Validation & SQL Security
 
 **Last Updated:** 2025-11-17
-**Phase:** 4.2 - Input Validation Audit
-**Status:** ✅ Baseline documented
+**Phases:** 4.2 (Input Validation), 4.3 (SQL Injection Prevention)
+**Status:** ✅ Comprehensive security audit complete
 
 ## Executive Summary
 
 **Validation Approach:** FastAPI + Pydantic automatic validation
 **Coverage:** 100% of endpoints with input validation requirements
-**Security Posture:** Strong (type-safe, extra fields rejected, size limits enforced)
+**SQL Security:** ✅ SECURE - All queries use parameterized statements (0/4 vulnerabilities)
+**Security Posture:** Strong (type-safe, extra fields rejected, size limits enforced, SQL injection impossible)
 **Gaps Identified:** Edge case testing coverage (see Testing Gaps section)
 
 ---
@@ -335,6 +336,203 @@ app.add_middleware(LimitUploadSize, max_upload_size=1_048_576)
   - Reject unknown fields
   - Type-safe validation
   - Detailed error messages (no stack traces in production)
+
+---
+
+## SQL Injection Prevention
+
+**Last Audited:** 2025-11-17 (Phase 4.3)
+**Status:** ✅ SECURE - All queries use parameterized statements
+
+### Audit Summary
+
+**Total Database Queries:** 4
+**Safe (Parameterized):** 4 (100%)
+**Unsafe (String Concatenation):** 0 (0%)
+**Verdict:** PASS - Zero SQL injection vulnerabilities
+
+### Query Inventory
+
+#### 1. API Results Service - Get Vote Results
+
+**File:** [api/services/results_service.py:56](../services/results_service.py#L56)
+
+```python
+rows = await conn.fetch("SELECT * FROM get_vote_results()")
+```
+
+**Analysis:**
+- ✅ SAFE: Calls stored procedure with no user input
+- ✅ SAFE: No string concatenation or interpolation
+- ✅ SAFE: Fixed query string
+
+**Security Pattern:** Stored procedure call (no parameters)
+
+---
+
+#### 2. Consumer - Increment Vote
+
+**File:** [consumer/db_client.py:77-79](../../consumer/db_client.py#L77-L79)
+
+```python
+result = await conn.fetchrow(
+    "SELECT * FROM increment_vote($1)",
+    option
+)
+```
+
+**Analysis:**
+- ✅ SAFE: Uses asyncpg parameterized query with $1 placeholder
+- ✅ SAFE: `option` parameter passed separately, not concatenated
+- ✅ SAFE: Input validated before reaching this layer (Pydantic)
+- ✅ SAFE: Additional validation at DB layer (`option NOT IN ("cats", "dogs")` check)
+
+**Security Pattern:** asyncpg parameterized query (`$1` placeholder)
+
+---
+
+#### 3. API DB Client - Connection Health Check
+
+**File:** [api/db_client.py:37](../db_client.py#L37)
+
+```python
+await conn.fetchval("SELECT 1")
+```
+
+**Analysis:**
+- ✅ SAFE: Fixed query string, no user input
+- ✅ SAFE: Health check only
+
+**Security Pattern:** Fixed query (no parameters)
+
+---
+
+#### 4. API DB Client - Ready Check
+
+**File:** [api/db_client.py:81](../db_client.py#L81)
+
+```python
+await conn.fetchval("SELECT 1")
+```
+
+**Analysis:**
+- ✅ SAFE: Fixed query string, no user input
+- ✅ SAFE: Readiness probe only
+
+**Security Pattern:** Fixed query (no parameters)
+
+---
+
+### Security Patterns Verified
+
+**1. asyncpg Parameterized Queries (Recommended)**
+```python
+# SAFE - Parameterized query
+await conn.fetchrow("SELECT * FROM increment_vote($1)", user_input)
+```
+
+**Why Safe:**
+- asyncpg treats $1, $2, etc. as placeholders
+- Parameters passed separately from query string
+- Driver handles escaping automatically
+- No string concatenation possible
+
+**2. Stored Procedure Calls (Safe)**
+```python
+# SAFE - No user input
+await conn.fetch("SELECT * FROM get_vote_results()")
+```
+
+**Why Safe:**
+- Fixed query string
+- No user-controlled input
+- Calls database function
+
+---
+
+### Unsafe Patterns (NOT FOUND)
+
+**Codebase Search Results:**
+
+```bash
+# Search for f-strings in SQL context
+grep -r 'f".*SELECT\|f".*INSERT\|f".*UPDATE\|f".*DELETE' --include="*.py"
+# Result: No matches
+
+# Search for % formatting in SQL context
+grep -r '%.*SELECT\|%.*INSERT\|%.*UPDATE\|%.*DELETE' --include="*.py"
+# Result: No matches
+
+# Search for string concatenation in SQL
+grep -r '\"SELECT.*+\|+.*SELECT\"' --include="*.py"
+# Result: No matches
+```
+
+**❌ UNSAFE Pattern Examples (None Found):**
+
+```python
+# DON'T: f-string interpolation
+query = f"SELECT * FROM votes WHERE option = '{user_input}'"  # VULNERABLE
+
+# DON'T: % formatting
+query = "SELECT * FROM votes WHERE option = '%s'" % user_input  # VULNERABLE
+
+# DON'T: String concatenation
+query = "SELECT * FROM votes WHERE option = '" + user_input + "'"  # VULNERABLE
+```
+
+---
+
+### Defense in Depth
+
+SQL injection protection is provided by multiple layers:
+
+1. **API Layer (Primary):** Pydantic Literal["cats", "dogs"] validation
+   - Rejects any value not exactly "cats" or "dogs"
+   - Tested in Phase 4.2 (4/4 SQL injection payloads rejected)
+
+2. **Database Layer (Secondary):** asyncpg parameterized queries
+   - $1, $2, etc. placeholders prevent injection
+   - Driver-level escaping
+
+3. **Application Logic (Tertiary):** Input validation at consumer
+   - `if option not in ("cats", "dogs")` check in consumer/db_client.py:70
+
+**Verdict:** Triple-layer protection ensures SQL injection is impossible even if one layer fails.
+
+---
+
+### Verification Evidence
+
+**Automated Scan:**
+```bash
+# All database operations use safe patterns
+grep -E '\.execute\(|\.fetch\(|\.fetchrow\(|\.fetchval\(' --include="*.py" -r .
+
+Results:
+- api/services/results_service.py:56  → fetch("SELECT * FROM get_vote_results()")
+- consumer/db_client.py:77             → fetchrow("SELECT * FROM increment_vote($1)", option)
+- api/db_client.py:37                  → fetchval("SELECT 1")
+- api/db_client.py:81                  → fetchval("SELECT 1")
+```
+
+**Manual Review:** ✅ All 4 queries audited (see above)
+
+**Test Coverage:** ✅ Phase 4.2 tests validated SQL injection rejection at API layer
+
+---
+
+### Recommendations
+
+1. **Current State:** ✅ SECURE - Maintain existing patterns
+2. **Future Development:**
+   - Continue using asyncpg parameterized queries ($1, $2, etc.)
+   - Never use f-strings or % formatting in SQL queries
+   - Add static analysis (bandit) to CI/CD to detect unsafe patterns
+3. **Code Review Checklist:**
+   - [ ] All new queries use $1, $2, etc. placeholders
+   - [ ] No string concatenation in SQL contexts
+   - [ ] No f-strings or % formatting in SQL queries
 
 ---
 
