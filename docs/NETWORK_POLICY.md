@@ -2,8 +2,8 @@
 
 **Purpose:** Define least-privilege network isolation for all microservices using Kubernetes NetworkPolicy
 
-**Status:** In Progress - Phase 4.5
-**Last Updated:** 2025-11-17
+**Status:** Infrastructure Complete - Testing Pending (Phase 4.5)
+**Last Updated:** 2025-11-18
 
 ---
 
@@ -815,9 +815,12 @@ NetworkPolicies are ONE layer in a comprehensive security strategy:
 
 ---
 
-**Next Steps:**
-1. Verify CNI supports NetworkPolicy
-2. Create policy YAML files in helm/templates/network-policies/
-3. Test in minikube
-4. Deploy to staging
-5. Production rollout (gradual)
+**Implementation Status:**
+1. ✅ CNI installed and verified (Calico v3.27.0)
+2. ✅ Policy YAML files created in helm/templates/network-policies/ (6 files, 12 policies total)
+3. ✅ Namespace labels added for NetworkPolicy selectors
+4. ✅ Helm values configuration added (networkPolicies.enabled: false by default)
+5. ⏳ Pending: Deploy to dev/local cluster (requires Phase 5 application deployment)
+6. ⏳ Pending: Run integration tests to validate application functionality
+7. ⏳ Pending: Deploy to staging with gradual rollout
+8. ⏳ Pending: Production rollout

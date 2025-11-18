@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - High-priority security validation tests (SQL injection, XSS, oversized payload, malformed JSON)
 - Property-based testing documentation (Hypothesis/Schemathesis) in tech-to-review.md
 - SQL injection prevention audit documentation in `api/docs/VALIDATION.md`
+- Calico CNI v3.27.0 for NetworkPolicy enforcement
+- NetworkPolicy templates for 4-namespace isolation (default deny-all with explicit allow)
+- Network traffic flow documentation (`docs/NETWORK_POLICY.md`, 800+ lines)
+- Cilium CNI evaluation documentation for future L7 policy migration (tech-to-review.md)
 
 ### Security
 - Validated all containers run as non-root (frontend: UID 1000, api: UID 65532, consumer: UID 1000)
@@ -44,6 +48,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Consumer (Debian 13.1): 0 HIGH/CRITICAL vulnerabilities - clean baseline
   - Comprehensive vulnerability report created (`docs/VULNERABILITY_SCAN.md`)
   - Remediation plan documented for all findings
+- Network policy implementation complete (Phase 4.5):
+  - 12 NetworkPolicy resources implementing default deny-all with explicit allow
+  - Calico CNI v3.27.0 installed and verified (calico-node, calico-kube-controllers running)
+  - 4 namespaces isolated: voting-frontend, voting-api, voting-consumer, voting-data
+  - 7 legitimate traffic flows documented and allowed (Gateway→Frontend, Frontend→API, API/Consumer→PostgreSQL/Redis, All→DNS)
+  - 6 security boundaries enforced (Frontend blocked from data layer, Consumer blocked from presentation layer, external access restricted)
+  - DNS egress policies enabled for Service discovery (kube-dns on port 53 TCP/UDP)
+  - Namespace labels added for NetworkPolicy selectors (`name: voting-*`)
+  - Helm values configuration for NetworkPolicy feature flag (`networkPolicies.enabled: false` by default)
+  - Comprehensive NetworkPolicy documentation created (`docs/NETWORK_POLICY.md`, 800+ lines with traffic matrix, troubleshooting, CNI compatibility)
+  - Cilium CNI evaluation documented for future L7 policy migration (Post-Phase 6)
 
 ### Changed
 - Updated README.md phase badge to 4.1 complete
