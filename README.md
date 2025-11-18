@@ -219,6 +219,7 @@ See documentation:
 - [Phase 1 Validation](docs/PHASE1_VALIDATION.md) - Infrastructure validation protocol
 - [Phase 2 Validation](docs/PHASE2_VALIDATION.md) - Backend validation protocol
 - [Phase 3 Validation](docs/PHASE3_VALIDATION.md) - Frontend validation protocol
+- [Phase 4 Validation](docs/PHASE4_VALIDATION.md) - Security validation checklist
 
 **History:**
 - [Session Logs](docs/sessions/) - Development session history (12 sessions)
