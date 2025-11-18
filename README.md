@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Phase](https://img.shields.io/badge/phase-4.4%20complete-green)
+![Phase](https://img.shields.io/badge/phase-5.2%20complete-green)
 
 Event-driven voting application deployed on Kubernetes with real-time results.
 
@@ -14,7 +14,7 @@ A microservices-based voting platform where users vote between two options (Cats
 
 - **Frontend:** React 18, TypeScript, Vite, Nginx v0.5.0 - Phase 3 ✓
 - **API:** FastAPI v0.3.2 (Python) - Phase 2 ✓
-- **Event Consumer:** Python v0.3.0 (K8s Deployment) - Phase 2 ✓
+- **Event Consumer:** Python v0.3.1 (K8s Deployment) - Phase 2 ✓
 - **Data Store:** PostgreSQL 15
 - **Event Stream:** Redis Streams 7
 - **Deployment:** Kubernetes, Helm
@@ -151,7 +151,7 @@ minikube start --cpus=4 --memory=8192
 eval $(minikube docker-env)
 docker build -t frontend:0.5.0 frontend/
 docker build -t api:0.3.2 api/
-docker build -t consumer:0.3.0 consumer/
+docker build -t consumer:0.3.1 consumer/
 
 # 3. Deploy with Helm
 helm install voting-app ./helm -f helm/values-local.yaml
@@ -191,15 +191,16 @@ See documentation:
 - ✅ **Phase 2:** Backend core (FastAPI + Consumer implementation)
 - ✅ **Phase 3:** Frontend implementation (VoteButtons, VoteResults, API integration)
 - ✅ **Phase 3.5:** Testing & Validation (Vitest, 100% component coverage, TDD established)
+- ✅ **Phase 4:** Security & Hardening (14/14 tasks complete - network policies, container scanning, input validation, SQL injection prevention)
+- ✅ **Phase 5.1-5.2:** Integration testing (Helm deployment to minikube, end-to-end vote flow verification)
 
 **Next Phases:**
-- **Phase 4:** Security & Hardening (network policies, container scanning, input validation)
-- **Phase 5:** Integration testing (full stack deployment, end-to-end flows)
+- **Phase 5.3-5.4:** Load testing and SSE live updates
 - **Phase 6:** Documentation and production readiness
 
 **Component Versions:**
 - API: v0.3.2 (FastAPI, security hardened, Redis + PostgreSQL)
-- Consumer: v0.3.0 (Redis Streams processor, asyncpg)
+- Consumer: v0.3.1 (Redis Streams processor, asyncpg, fixed field name handling)
 - Frontend: v0.5.0 (React 18, TypeScript, custom hooks, API integration)
 
 ## Documentation

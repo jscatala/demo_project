@@ -59,11 +59,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Helm values configuration for NetworkPolicy feature flag (`networkPolicies.enabled: false` by default)
   - Comprehensive NetworkPolicy documentation created (`docs/NETWORK_POLICY.md`, 800+ lines with traffic matrix, troubleshooting, CNI compatibility)
   - Cilium CNI evaluation documented for future L7 policy migration (Post-Phase 6)
+  - Network policies deployed to minikube (demo-project--dev profile)
+  - End-to-end vote flow verified with policies enabled (0 errors, all traffic allowed as expected)
+  - Network connectivity validation script created (`scripts/test-network-policies.sh`)
+- Integration testing complete (Phase 5.1-5.2):
+  - Helm deployment to minikube with internal StatefulSets (PostgreSQL, Redis)
+  - All images loaded: frontend:0.5.0, api:0.3.2, consumer:0.3.1
+  - Local configuration created (`helm/values-local.yaml`)
+  - End-to-end vote flow verified: Vote → Redis Stream → Consumer → PostgreSQL → Results
+  - Network policies enabled and validated (12 policies active)
+  - Phase 4 validation checklist created (`docs/PHASE4_VALIDATION.md`, 881 lines)
 
 ### Changed
-- Updated README.md phase badge to 4.1 complete
+- Updated README.md phase badge to 5.2 complete
 - Enhanced CONTRIBUTING.md with pre-deployment security checklist
 - Updated api/.dockerignore to allow tests/ directory for Dockerfile.test builds
+- Consumer version bumped from v0.3.0 to v0.3.1
+
+### Fixed
+- Fixed Helm templates using hardcoded values instead of template variables (api/deployment.yaml)
+  - Image tag now uses `{{ .Values.images.api.tag }}` instead of hardcoded `api:0.1.0`
+  - Environment variables now use values (REDIS_URL, DATABASE_URL, CORS_ORIGINS)
+  - Image pull policy now configurable via values
+- Fixed API security context UID mismatch (1000 → 65532) for distroless compatibility
+  - Resolved CrashLoopBackOff caused by permission errors
+  - All pods now run with correct non-root UIDs
+- Fixed consumer field name mismatch (expected "vote", API sent "option")
+  - Updated consumer/main.py to read "option" field from Redis Stream messages
+  - Resolved vote processing failures (all votes were rejected as malformed)
 
 ## [0.1.0-dev] - 2025-11-15
 
