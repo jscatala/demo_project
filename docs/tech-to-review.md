@@ -610,30 +610,273 @@ pytest tests/test_vote.py::test_vote_validation_property -v
 
 **Status:** ✅ In use (Phase 4.5+)
 
-**Resources:**
-- Official docs: https://docs.tigera.io/calico/latest/about/
-- NetworkPolicy guide: https://docs.tigera.io/calico/latest/network-policy/
-- Installation: https://docs.tigera.io/calico/latest/getting-started/kubernetes/
-- Troubleshooting: https://docs.tigera.io/calico/latest/operations/troubleshoot/
-
-**Key features:**
-- **NetworkPolicy enforcement**: Kubernetes native policies (ingress/egress rules)
-- **IP Address Management (IPAM)**: Automatic pod IP allocation
-- **BGP routing**: Scalable L3 networking (optional)
-- **Calico Network Policies**: Extended CRDs with more granular controls (namespaceSelector, serviceAccountSelector)
-- **calicoctl**: CLI tool for advanced policy management and debugging
-
 **Installed version:** v3.27.0
 
-**Verification:**
+---
+
+### Getting Started with Calico
+
+**Prerequisites:**
+- Kubernetes cluster (v1.19+)
+- kubectl configured with cluster access
+- No existing CNI installed (or plan to migrate)
+
+**Installation (what we did in Phase 4.5):**
+
 ```bash
-# Check Calico pods
+# 1. Install Calico CNI v3.27.0
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+# 2. Wait for all Calico pods to be ready
+kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=300s
+kubectl wait --for=condition=ready pod -l k8s-app=calico-kube-controllers -n kube-system --timeout=300s
+
+# 3. Verify installation
 kubectl get pods -n kube-system -l k8s-app=calico-node
 kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
 
-# Verify NetworkPolicy CRDs
-kubectl api-resources | grep networkpolicies
+# Expected output:
+# calico-node-xxxxx              1/1     Running
+# calico-kube-controllers-xxxxx  1/1     Running
 ```
+
+**Verify NetworkPolicy support:**
+```bash
+# Check NetworkPolicy API is available
+kubectl api-resources | grep networkpolicies
+
+# Expected output:
+# networkpolicies    netpol    networking.k8s.io/v1    true    NetworkPolicy
+```
+
+---
+
+### What We Implemented in This Project
+
+**Phase 4.5 NetworkPolicy Infrastructure:**
+
+1. **CNI Installation:**
+   - Installed Calico v3.27.0 for NetworkPolicy enforcement
+   - Verified calico-node and calico-kube-controllers running
+   - Confirmed NetworkPolicy CRD available
+
+2. **Namespace Configuration:**
+   - Added `name:` labels to all 4 namespaces for NetworkPolicy selectors:
+     - `voting-frontend` (name: voting-frontend)
+     - `voting-api` (name: voting-api)
+     - `voting-consumer` (name: voting-consumer)
+     - `voting-data` (name: voting-data)
+   - Files: `helm/templates/namespaces/*.yaml`
+
+3. **NetworkPolicy Resources (12 total):**
+   - **Default deny-all** (4 policies): One per namespace, blocks all ingress by default
+   - **DNS egress** (4 policies): Allow all pods to reach kube-dns for Service discovery
+   - **Frontend ingress** (1 policy): Allow Gateway/Ingress → Frontend :80
+   - **API ingress** (1 policy): Allow Frontend → API :8000
+   - **PostgreSQL ingress** (1 policy): Allow API + Consumer → PostgreSQL :5432
+   - **Redis ingress** (1 policy): Allow API + Consumer → Redis :6379
+   - Files: `helm/templates/network-policies/*.yaml`
+
+4. **Helm Integration:**
+   - Added `networkPolicies` configuration to `helm/values.yaml`
+   - Feature flag: `networkPolicies.enabled: false` (disabled by default for safety)
+   - CNI selection: `networkPolicies.cni: calico`
+   - Conditional rendering: All policies wrapped in `{{- if .Values.networkPolicies.enabled }}`
+
+5. **Documentation:**
+   - Comprehensive NetworkPolicy documentation: `docs/NETWORK_POLICY.md` (823 lines)
+   - Traffic flow matrix: 7 allowed flows, 6 blocked security boundaries
+   - Troubleshooting guide: 5 common issues with debug commands
+   - Deployment strategy: Gradual rollout, rollback plan
+   - Testing plan: Deferred to Phase 5 (requires application deployment)
+
+**Security Model:**
+- Default deny-all ingress (fail-secure)
+- Explicit allow rules for documented traffic only
+- DNS egress enabled for Service discovery
+- No egress restrictions (allows internet access if needed)
+- Layer-based isolation (presentation → application → data)
+
+---
+
+### Key Calico Concepts to Learn
+
+**1. CNI Architecture:**
+- **calico-node**: DaemonSet running on each node, enforces policies via iptables/eBPF
+- **calico-kube-controllers**: Deployment watching Kubernetes resources, syncs policies
+- **IPAM (IP Address Management)**: Automatic pod IP allocation from configured pools
+- **BGP routing**: Optional Layer 3 routing for pod-to-pod communication across nodes
+
+**2. NetworkPolicy vs Calico NetworkPolicy:**
+- **Kubernetes NetworkPolicy**: Standard API, supported by all CNIs (Calico, Cilium, Weave)
+- **Calico NetworkPolicy**: Extended CRD with additional features:
+  - GlobalNetworkPolicy (cluster-wide, not namespaced)
+  - ServiceAccountSelector (fine-grained RBAC integration)
+  - Deny rules (explicit deny, not just default deny)
+  - HTTP/ICMP protocol matching
+  - More flexible ordering and precedence
+
+**3. Policy Selectors:**
+- **podSelector**: Matches pods in the same namespace
+- **namespaceSelector**: Matches pods in other namespaces by label
+- **Combined selectors**: Require BOTH namespace AND pod labels to match
+- **Empty podSelector** (`{}`): Matches ALL pods in namespace
+
+**4. Policy Types:**
+- **Ingress**: Controls inbound traffic TO pods
+- **Egress**: Controls outbound traffic FROM pods
+- **Default behavior**: If no policy exists, all traffic allowed (fail-open)
+- **With policy**: Only specified traffic allowed (fail-secure)
+
+---
+
+### Learning Path
+
+**Beginner (understand fundamentals):**
+1. Read Kubernetes NetworkPolicy docs: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+2. Review our implementation: `docs/NETWORK_POLICY.md` (complete traffic matrix)
+3. Understand selectors: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+4. Try NetworkPolicy editor (visual tool): https://editor.networkpolicy.io/
+
+**Intermediate (hands-on practice):**
+1. Deploy our policies: `helm upgrade voting-app ./helm --set networkPolicies.enabled=true`
+2. Test connectivity: Use `kubectl exec` to verify allowed/denied connections
+3. Debug policy violations: `kubectl logs -n kube-system -l k8s-app=calico-node`
+4. Read Calico NetworkPolicy guide: https://docs.tigera.io/calico/latest/network-policy/
+
+**Advanced (deep dive):**
+1. Install calicoctl CLI: https://docs.tigera.io/calico/latest/operations/calicoctl/install
+2. Inspect policy rules: `calicoctl get networkpolicy -o yaml`
+3. View iptables rules: `calicoctl node status` (see how policies translate to iptables)
+4. Explore Calico NetworkPolicy CRDs: https://docs.tigera.io/calico/latest/reference/resources/
+5. Consider Cilium migration (eBPF-based, L7 policies): See Cilium section below
+
+---
+
+### Resources
+
+**Official Documentation:**
+- Getting started: https://docs.tigera.io/calico/latest/getting-started/kubernetes/
+- NetworkPolicy guide: https://docs.tigera.io/calico/latest/network-policy/
+- Troubleshooting: https://docs.tigera.io/calico/latest/operations/troubleshoot/
+- calicoctl CLI: https://docs.tigera.io/calico/latest/operations/calicoctl/
+
+**Tutorials:**
+- Calico NetworkPolicy tutorial: https://docs.tigera.io/calico/latest/network-policy/get-started/kubernetes-policy/kubernetes-network-policy
+- Advanced policy tutorial: https://docs.tigera.io/calico/latest/network-policy/get-started/kubernetes-policy/kubernetes-demo
+- Security best practices: https://docs.tigera.io/calico/latest/network-policy/get-started/kubernetes-policy/kubernetes-policy-advanced
+
+**Debugging Tools:**
+- NetworkPolicy editor (visual): https://editor.networkpolicy.io/
+- calicoctl: https://docs.tigera.io/calico/latest/operations/calicoctl/install
+- Kubernetes Network Policy Recipes: https://github.com/ahmetb/kubernetes-network-policy-recipes
+
+---
+
+### Common Tasks
+
+**Check Calico status:**
+```bash
+# View Calico pods
+kubectl get pods -n kube-system -l k8s-app=calico-node
+kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
+
+# Check logs (troubleshooting)
+kubectl logs -n kube-system -l k8s-app=calico-node --tail=100
+kubectl logs -n kube-system -l k8s-app=calico-kube-controllers --tail=100
+```
+
+**List NetworkPolicies:**
+```bash
+# All namespaces
+kubectl get networkpolicy -A
+
+# Specific namespace
+kubectl get networkpolicy -n voting-api
+
+# Detailed view
+kubectl describe networkpolicy -n voting-api api-allow-frontend
+```
+
+**Test connectivity (Phase 5+):**
+```bash
+# Test allowed connection: Frontend → API
+kubectl exec -n voting-frontend deploy/frontend -- curl -s http://api.voting-api.svc.cluster.local:8000/health
+
+# Test denied connection: Frontend → PostgreSQL (should timeout)
+kubectl exec -n voting-frontend deploy/frontend -- timeout 5 curl -s http://postgres.voting-data.svc.cluster.local:5432
+```
+
+**Debug policy violations:**
+```bash
+# Check Calico logs for policy denials
+kubectl logs -n kube-system -l k8s-app=calico-node | grep -i "deny\|drop"
+
+# View effective policies for a pod
+kubectl get networkpolicy -n voting-api -o yaml
+```
+
+---
+
+### Tips for Learning Calico
+
+1. **Start simple**: Test with 1-2 namespaces before scaling to full architecture
+2. **Visualize first**: Use https://editor.networkpolicy.io/ to understand selectors
+3. **Audit mode**: Deploy policies without enforcement first, review logs for violations
+4. **Test systematically**: Our script `scripts/test-network-policies.sh` (Phase 5) validates all flows
+5. **Read logs**: Calico logs show why traffic is denied (look for "dropped" or "denied")
+6. **Use labels consistently**: Our project uses `app.kubernetes.io/component` for pod selectors
+7. **Default deny-all first**: Always create default deny before allow rules (fail-secure)
+8. **DNS is critical**: Forgetting DNS egress breaks Service discovery (we include it)
+9. **Gradual rollout**: Enable policies per namespace incrementally (not all at once)
+10. **Keep documentation updated**: Our `docs/NETWORK_POLICY.md` serves as single source of truth
+
+---
+
+### Troubleshooting
+
+**Issue: Pods can't resolve DNS**
+```bash
+# Solution: Check DNS egress policy exists
+kubectl get networkpolicy -n voting-api allow-dns-access
+
+# Verify kube-dns pods have correct labels
+kubectl get pods -n kube-system -l k8s-app=kube-dns --show-labels
+```
+
+**Issue: Policy not enforced**
+```bash
+# 1. Verify Calico is running
+kubectl get pods -n kube-system -l k8s-app=calico-node
+
+# 2. Check NetworkPolicy exists
+kubectl get networkpolicy -A
+
+# 3. Verify namespace labels match policy selectors
+kubectl get ns voting-frontend --show-labels
+```
+
+**Issue: Unexpected connection blocked**
+```bash
+# 1. Check all policies in namespace
+kubectl get networkpolicy -n voting-api -o yaml
+
+# 2. Review Calico logs
+kubectl logs -n kube-system -l k8s-app=calico-node --tail=100 | grep voting-api
+
+# 3. Verify pod labels match policy podSelector
+kubectl get pods -n voting-api --show-labels
+```
+
+---
+
+### Next Steps After Calico Mastery
+
+1. **Deploy our policies**: Enable `networkPolicies.enabled: true` in Phase 5
+2. **Run validation tests**: Use `scripts/test-network-policies.sh` to verify all flows
+3. **Monitor metrics**: Set up Prometheus to track policy denials
+4. **Explore Calico NetworkPolicy CRDs**: More powerful than Kubernetes NetworkPolicy
+5. **Consider Cilium migration**: eBPF-based, L7 policies, Hubble UI (see Cilium section)
 
 ---
 
