@@ -434,7 +434,22 @@
 
 - [~] Test SSE live updates - Deferred (not implemented, see Future Improvements)
 
-- [ ] Load testing with multiple concurrent votes
+- [ ] Load testing: Establish performance baseline and identify system breaking points
+  - [ ] Define load test parameters (users, duration, ramp-up strategy)
+  - [ ] Measure baseline performance (single vote P50/P95/P99 latency)
+  - [ ] Choose and install load testing tool (k6 recommended for K8s)
+  - [ ] Write load test script (POST /api/vote with random cats/dogs)
+  - [ ] Configure minikube resource limits (match production constraints)
+  - [ ] Set up metrics collection (kubectl top or Prometheus)
+  - [ ] Execute 10-user load test (30 seconds, constant rate)
+  - [ ] Execute 50-user load test (1 minute, ramp-up)
+  - [ ] Execute 100-user load test (2 minutes, sustained)
+  - [ ] Monitor consumer lag during load (XPENDING, processing time)
+  - [ ] Verify vote count accuracy (compare submitted vs processed)
+  - [ ] Identify bottleneck component (CPU/memory/network analysis)
+  - [ ] Document performance results (latencies, throughput, errors)
+  - [ ] Create load testing script (scripts/load-test.sh)
+  - [ ] Update CHANGELOG.md with Phase 5.3 load test results
 
 ## Phase 6: Documentation (Low Priority)
 - [ ] Architecture diagram (K8s resources, event flow)

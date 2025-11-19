@@ -949,6 +949,534 @@ spec:
 
 ---
 
+## Kubernetes Observability (Prometheus + Grafana)
+
+**What:** Monitoring and visualization stack for Kubernetes metrics. Prometheus collects and stores time-series metrics, Grafana provides dashboards and visualizations.
+
+**Why:** Essential for understanding system performance, identifying bottlenecks, and setting SLOs. Enables data-driven decisions for optimization and capacity planning.
+
+**Status:** 🔮 Future improvement (Post-Phase 5.3)
+
+**Current approach:**
+- No metrics collection (blind to performance)
+- Manual kubectl inspection (pod CPU/memory at a point in time)
+- No historical data for trend analysis
+- metrics-server addon for kubectl top (basic resource usage)
+
+**Benefits of Prometheus + Grafana:**
+- **Historical metrics:** Track performance trends over time (not just snapshots)
+- **Custom dashboards:** Visualize vote rate, API latency, consumer lag, pod resources
+- **Alerting:** Notify when metrics exceed thresholds (high CPU, slow response times)
+- **Query language (PromQL):** Flexible metric aggregation and analysis
+- **Service discovery:** Auto-discovers Kubernetes services and pods
+- **Industry standard:** Wide ecosystem, extensive documentation
+
+---
+
+### Implementation Options
+
+#### Option A: metrics-server (Lightweight)
+**Status:** ⚡ In use for Phase 5.3 load testing
+
+**What:** Cluster-wide metrics aggregator for resource utilization (CPU, memory). Powers `kubectl top` command.
+
+**Installation:**
+```bash
+# Minikube addon (recommended for local)
+minikube addons enable metrics-server -p demo-project--dev
+
+# Verify installation
+kubectl top nodes
+kubectl top pods --all-namespaces
+```
+
+**Pros:**
+- ✅ Minimal overhead (~10MB memory)
+- ✅ Built-in kubectl integration
+- ✅ Sufficient for basic load testing
+- ✅ No external dependencies
+
+**Cons:**
+- ❌ No historical data (current state only)
+- ❌ Limited metrics (CPU/memory, no custom metrics)
+- ❌ No visualization (command-line only)
+- ❌ No alerting capabilities
+
+**Use case:** Phase 5.3 load testing baseline (quick iteration, no complex setup)
+
+---
+
+#### Option B: kube-prometheus-stack (Production-grade)
+**Status:** Recommended for Phase 6+ or production
+
+**What:** Complete observability stack with Prometheus, Grafana, Alertmanager, and pre-configured dashboards for Kubernetes.
+
+**Installation:**
+```bash
+# Add Prometheus community Helm repo
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Install stack with sensible defaults
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set prometheus.prometheusSpec.retention=7d \
+  --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=10Gi \
+  --set grafana.enabled=true \
+  --set grafana.adminPassword=admin
+
+# Access Grafana dashboard
+kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
+# Open http://localhost:3000 (admin/admin)
+```
+
+**What's included:**
+- **Prometheus:** Metrics collection and storage
+- **Grafana:** Visualization dashboards
+- **Alertmanager:** Alert routing and notification
+- **Node Exporter:** Host-level metrics (CPU, disk, network per node)
+- **kube-state-metrics:** Kubernetes object metrics (deployments, pods, services)
+- **Pre-built dashboards:** 15+ dashboards (Kubernetes capacity, pod resources, node stats)
+
+**Pros:**
+- ✅ Complete observability solution (one install)
+- ✅ Pre-configured dashboards (immediate value)
+- ✅ Historical data with retention policy
+- ✅ Custom metrics support (instrument application code)
+- ✅ Alerting (Slack, PagerDuty, email integration)
+- ✅ Industry standard (production-ready)
+
+**Cons:**
+- ❌ Higher resource usage (~500MB memory)
+- ❌ More complex (multiple components)
+- ❌ Longer setup time (~10 minutes)
+- ❌ Storage requirements for time-series data
+
+**Use case:** Production deployments, long-term monitoring, SLO tracking, capacity planning
+
+---
+
+### Key Metrics to Track
+
+**API Performance:**
+- Request rate (requests/second)
+- P50/P95/P99 latency (milliseconds)
+- Error rate (5xx responses)
+- HTTP status code distribution
+
+**Consumer Performance:**
+- Consumer lag (messages behind in stream)
+- Processing rate (messages/second)
+- Processing latency (time from XADD to database insert)
+- Failed message count
+
+**Infrastructure:**
+- Pod CPU usage (millicores)
+- Pod memory usage (MB)
+- Pod restart count
+- Node resource utilization
+
+**Application-specific:**
+- Vote submission rate (votes/second)
+- Total votes processed
+- Redis Stream length (backlog size)
+- Database connection pool usage
+
+---
+
+### Prometheus Query Examples
+
+**API latency P95:**
+```promql
+histogram_quantile(0.95,
+  rate(http_request_duration_seconds_bucket[5m])
+)
+```
+
+**Vote submission rate:**
+```promql
+rate(votes_total[1m])
+```
+
+**Consumer lag:**
+```promql
+redis_stream_length{stream="votes"} - redis_stream_consumer_pending{stream="votes", group="votes-group"}
+```
+
+**Pod memory usage:**
+```promql
+container_memory_usage_bytes{pod=~"api-.*", namespace="voting-api"}
+```
+
+---
+
+### Resources
+
+**Prometheus:**
+- Official docs: https://prometheus.io/docs/introduction/overview/
+- Getting started: https://prometheus.io/docs/prometheus/latest/getting_started/
+- PromQL guide: https://prometheus.io/docs/prometheus/latest/querying/basics/
+- Best practices: https://prometheus.io/docs/practices/
+
+**Grafana:**
+- Official docs: https://grafana.com/docs/grafana/latest/
+- Dashboard gallery: https://grafana.com/grafana/dashboards/
+- Prometheus integration: https://grafana.com/docs/grafana/latest/datasources/prometheus/
+
+**kube-prometheus-stack:**
+- Helm chart: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+- Configuration: https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
+- Pre-built dashboards: https://grafana.com/grafana/dashboards/?search=kubernetes
+
+**metrics-server:**
+- GitHub: https://github.com/kubernetes-sigs/metrics-server
+- Design docs: https://github.com/kubernetes/design-proposals-archive/blob/main/instrumentation/resource-metrics-api.md
+
+---
+
+### Trade-offs
+
+**metrics-server:**
+- ➕ Minimal resource footprint
+- ➕ Fast setup (1 command)
+- ➕ Good enough for basic load testing
+- ➖ No persistence (restart loses data)
+- ➖ No custom metrics
+- ➖ No visualization
+
+**kube-prometheus-stack:**
+- ➕ Production-ready observability
+- ➕ Historical data and trend analysis
+- ➕ Custom application metrics (instrument code)
+- ➕ Alerting and notification
+- ➖ Higher resource requirements
+- ➖ More complex configuration
+- ➖ Storage needs for time-series data
+
+---
+
+### Decision Context
+
+**Phase 5.3 (current):** Use metrics-server for load testing
+- Need: Basic CPU/memory visibility during load tests
+- Goal: Identify obvious bottlenecks (CPU/memory exhaustion)
+- Duration: Short-lived tests (< 5 minutes each)
+- Decision: metrics-server sufficient, avoid complexity
+
+**Phase 6+ (future):** Upgrade to kube-prometheus-stack
+- Need: Production observability, SLO tracking
+- Goal: Continuous monitoring, trend analysis, alerting
+- Duration: Always-on monitoring
+- Decision: Full stack worth the investment
+
+**Trigger for upgrade:**
+- Production deployment planned
+- Need to establish SLOs with data
+- Want to track performance over time
+- Team needs dashboards for visibility
+
+---
+
+### Recommended Path
+
+**Phase 5.3 (now):**
+1. Enable metrics-server: `minikube addons enable metrics-server -p demo-project--dev`
+2. Run load tests with `kubectl top` monitoring
+3. Document baseline metrics in load test results
+4. Identify bottleneck component (API/consumer/database)
+
+**Phase 6 (later):**
+1. Install kube-prometheus-stack when needed
+2. Configure retention and storage
+3. Import pre-built Kubernetes dashboards
+4. Add custom application metrics (FastAPI middleware)
+5. Set up alerting rules (P95 latency, error rate)
+
+---
+
+## Load Testing Tools (k6, Locust, Apache Bench)
+
+**What:** Tools for generating synthetic load to measure system performance under concurrent user traffic.
+
+**Why:** Validates system capacity, identifies bottlenecks, establishes performance baselines, prevents production incidents from unexpected traffic spikes.
+
+**Status:** ⚡ Apache Bench in use for Phase 5.3, k6/Locust for future
+
+---
+
+### Implementation Options
+
+#### Option A: Apache Bench (ab) - Lightweight
+**Status:** ⚡ In use for Phase 5.3 load testing
+
+**What:** Simple HTTP benchmarking tool. Pre-installed on most systems (Apache HTTP server utilities).
+
+**Use case:** Quick baseline tests, simple load patterns, minimal setup
+
+**Example:**
+```bash
+# 100 requests, 10 concurrent
+ab -n 100 -c 10 -p vote.json -T application/json \
+  http://localhost:8000/api/vote
+
+# vote.json content:
+{"option": "cats"}
+```
+
+**Pros:**
+- ✅ Zero installation (usually pre-installed)
+- ✅ Simple CLI interface
+- ✅ Fast execution
+- ✅ Good for quick tests
+
+**Cons:**
+- ❌ No scripting (can't randomize payloads)
+- ❌ Limited metrics (basic only)
+- ❌ No ramp-up strategy (immediate load)
+- ❌ No distributed load generation
+
+**Best for:** Phase 5.3 baseline tests (10-100 concurrent users)
+
+---
+
+#### Option B: k6 - Modern & Kubernetes-native
+**Status:** Recommended for Phase 6+ or complex load testing
+
+**What:** Modern load testing tool with JavaScript scripting, designed for developers and CI/CD pipelines. Kubernetes-native with operator support.
+
+**Use case:** Realistic user scenarios, progressive load, distributed testing, CI/CD integration
+
+**Installation:**
+```bash
+# macOS
+brew install k6
+
+# Docker
+docker pull grafana/k6
+
+# Kubernetes operator
+kubectl apply -f https://github.com/grafana/k6-operator/releases/latest/download/bundle.yaml
+```
+
+**Example script:**
+```javascript
+// vote-load-test.js
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  stages: [
+    { duration: '30s', target: 10 },  // Ramp up to 10 users
+    { duration: '1m', target: 50 },   // Ramp up to 50 users
+    { duration: '1m', target: 50 },   // Stay at 50 users
+    { duration: '30s', target: 0 },   // Ramp down
+  ],
+  thresholds: {
+    'http_req_duration': ['p(95)<200'],  // 95% of requests < 200ms
+    'http_req_failed': ['rate<0.01'],    // < 1% error rate
+  },
+};
+
+export default function () {
+  const options_list = ['cats', 'dogs'];
+  const option = options_list[Math.floor(Math.random() * options_list.length)];
+
+  const payload = JSON.stringify({ option });
+  const params = { headers: { 'Content-Type': 'application/json' } };
+
+  const res = http.post('http://localhost:8000/api/vote', payload, params);
+
+  check(res, {
+    'status is 201': (r) => r.status === 201,
+    'response time < 500ms': (r) => r.timings.duration < 500,
+  });
+
+  sleep(1);  // 1 second between requests per user
+}
+```
+
+**Run:**
+```bash
+k6 run vote-load-test.js
+```
+
+**Pros:**
+- ✅ JavaScript scripting (familiar for web devs)
+- ✅ Realistic user scenarios (random payloads, delays)
+- ✅ Progressive load (ramp-up/ramp-down)
+- ✅ Built-in metrics (P50/P95/P99, requests/sec)
+- ✅ Threshold assertions (SLO validation)
+- ✅ Kubernetes operator (run as CronJob)
+- ✅ Cloud execution support (k6 Cloud, Grafana Cloud)
+
+**Cons:**
+- ❌ Requires installation
+- ❌ JavaScript knowledge needed
+- ❌ More complex than Apache Bench
+
+**Best for:** Progressive load tests, SLO validation, production-like scenarios
+
+---
+
+#### Option C: Locust - Python-based distributed testing
+**Status:** Alternative to k6, Python-focused teams
+
+**What:** Python-based load testing tool with web UI. Designed for distributed load generation across multiple machines.
+
+**Use case:** Python teams, distributed testing, web UI for monitoring, complex user behavior
+
+**Installation:**
+```bash
+pip install locust
+```
+
+**Example:**
+```python
+# locustfile.py
+from locust import HttpUser, task, between
+import random
+
+class VotingUser(HttpUser):
+    wait_time = between(1, 3)  # 1-3 seconds between requests
+
+    @task
+    def submit_vote(self):
+        option = random.choice(['cats', 'dogs'])
+        self.client.post("/api/vote", json={"option": option})
+
+    @task(2)  # 2x more frequent than vote
+    def get_results(self):
+        self.client.get("/api/results")
+```
+
+**Run:**
+```bash
+# Web UI
+locust -f locustfile.py --host=http://localhost:8000
+
+# Headless
+locust -f locustfile.py --host=http://localhost:8000 \
+  --users 50 --spawn-rate 5 --run-time 2m --headless
+```
+
+**Pros:**
+- ✅ Python-based (familiar for backend teams)
+- ✅ Web UI for monitoring (real-time charts)
+- ✅ Distributed mode (master/worker architecture)
+- ✅ Task weighting (realistic user behavior)
+- ✅ Flexible scripting (any Python library)
+
+**Cons:**
+- ❌ Requires Python environment
+- ❌ Higher resource usage (Python overhead)
+- ❌ No built-in Kubernetes operator
+
+**Best for:** Python-centric teams, distributed testing, complex user flows
+
+---
+
+### Comparison Matrix
+
+| Feature | Apache Bench | k6 | Locust |
+|---------|-------------|-----|--------|
+| **Installation** | Pre-installed | brew/docker | pip install |
+| **Scripting** | None | JavaScript | Python |
+| **Ramp-up** | No | Yes | Yes |
+| **Metrics** | Basic | Advanced (P95/P99) | Advanced |
+| **UI** | CLI only | CLI only | Web UI |
+| **Distributed** | No | Yes (k6 Cloud) | Yes (master/worker) |
+| **K8s native** | No | Yes (operator) | No |
+| **Learning curve** | Low | Medium | Medium |
+| **Best for** | Quick tests | Modern CI/CD | Python teams |
+
+---
+
+### Resources
+
+**Apache Bench:**
+- Manual: https://httpd.apache.org/docs/2.4/programs/ab.html
+- Tutorial: https://www.tutorialspoint.com/apache_bench/index.htm
+
+**k6:**
+- Official docs: https://k6.io/docs/
+- Getting started: https://k6.io/docs/get-started/running-k6/
+- Examples: https://k6.io/docs/examples/
+- k6 operator: https://github.com/grafana/k6-operator
+- Test scripts library: https://github.com/grafana/k6-learn
+
+**Locust:**
+- Official docs: https://docs.locust.io/
+- Quickstart: https://docs.locust.io/en/stable/quickstart.html
+- Distributed mode: https://docs.locust.io/en/stable/running-distributed.html
+
+---
+
+### Trade-offs
+
+**Apache Bench:**
+- ➕ Instant start (no setup)
+- ➕ Simple and fast
+- ➕ Good for quick validation
+- ➖ No realistic scenarios
+- ➖ Limited metrics
+
+**k6:**
+- ➕ Modern developer experience
+- ➕ Advanced metrics (P95/P99)
+- ➕ Kubernetes-native
+- ➕ SLO validation (thresholds)
+- ➖ Requires JavaScript knowledge
+- ➖ Extra installation step
+
+**Locust:**
+- ➕ Python ecosystem integration
+- ➕ Web UI for monitoring
+- ➕ Distributed testing
+- ➖ Higher resource usage
+- ➖ Python dependency
+
+---
+
+### Decision Context
+
+**Phase 5.3 (current):** Use Apache Bench
+- Need: Quick baseline performance measurement
+- Goal: Identify obvious bottlenecks (not production SLO validation)
+- Complexity: Simple POST /api/vote tests
+- Decision: Apache Bench sufficient for initial iteration
+
+**Phase 6+ (future):** Upgrade to k6
+- Need: Realistic load testing with progressive ramp-up
+- Goal: Validate SLOs, test failure modes, stress testing
+- Complexity: Multiple endpoints, randomized payloads, think time
+- Decision: k6 provides better metrics and scripting
+
+**Trigger for k6 adoption:**
+- Need to establish formal SLOs (P95 < 200ms)
+- Production deployment imminent
+- Want CI/CD load testing automation
+- Team comfortable with JavaScript
+
+---
+
+### Recommended Path
+
+**Phase 5.3 (now):**
+1. Use Apache Bench for quick baseline tests
+2. Test with 10, 50, 100 concurrent users
+3. Document P50/P95 latencies (use -g flag for TSV output)
+4. Monitor with kubectl top during tests
+
+**Phase 6 (later):**
+1. Install k6 when need realistic scenarios
+2. Write progressive load test script (ramp-up strategy)
+3. Define SLO thresholds in k6 options
+4. Integrate into CI/CD pipeline
+5. Consider k6 operator for scheduled tests in Kubernetes
+
+---
+
 ## Template for New Technologies
 
 ```markdown
