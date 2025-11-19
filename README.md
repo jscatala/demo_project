@@ -39,7 +39,7 @@ A microservices-based voting platform where users vote between two options (Cats
 ```mermaid
 graph TB
     subgraph "voting-frontend namespace"
-        FE[Frontend Deployment<br/>nginx:1.25-alpine<br/>UID 1000]
+        FE[Frontend Deployment<br/>v0.5.0 nginx:1.25-alpine<br/>UID 1000]
         FE_SVC[Frontend Service<br/>ClusterIP]
     end
 
@@ -121,6 +121,120 @@ sequenceDiagram
     API-->>Frontend: {cats: 151, dogs: 100}
     Frontend->>Frontend: Update progress bars
 ```
+
+### Network Policy Topology
+
+**Phase 4.5:** 12 NetworkPolicy resources implementing zero-trust security (Calico CNI v3.27.0)
+
+```mermaid
+graph LR
+    subgraph "voting-frontend namespace"
+        FE_POD[Frontend Pod<br/>v0.5.0]
+    end
+
+    subgraph "voting-api namespace"
+        API_POD[API Pod<br/>v0.3.2]
+    end
+
+    subgraph "voting-consumer namespace"
+        CONSUMER_POD[Consumer Pod<br/>v0.3.1]
+    end
+
+    subgraph "voting-data namespace"
+        REDIS_POD[Redis Pod]
+        PG_POD[PostgreSQL Pod]
+    end
+
+    subgraph "kube-system namespace"
+        DNS[CoreDNS<br/>port 53]
+    end
+
+    FE_POD -->|❌ DENIED| REDIS_POD
+    FE_POD -->|❌ DENIED| PG_POD
+    FE_POD -->|✅ ALLOW| API_POD
+    FE_POD -.->|✅ DNS| DNS
+
+    API_POD -->|✅ ALLOW| REDIS_POD
+    API_POD -->|✅ ALLOW| PG_POD
+    API_POD -.->|✅ DNS| DNS
+
+    CONSUMER_POD -->|✅ ALLOW| REDIS_POD
+    CONSUMER_POD -->|✅ ALLOW| PG_POD
+    CONSUMER_POD -->|❌ DENIED| API_POD
+    CONSUMER_POD -.->|✅ DNS| DNS
+
+    classDef allowed fill:#10b981,stroke:#059669,color:#fff
+    classDef denied fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef dns fill:#3b82f6,stroke:#2563eb,color:#fff,stroke-dasharray: 5 5
+
+    class API_POD,CONSUMER_POD,FE_POD allowed
+    class REDIS_POD,PG_POD allowed
+```
+
+**Policy Summary:**
+- **4 default-deny policies:** Block all ingress by default (one per voting namespace)
+- **4 DNS egress policies:** Allow DNS lookups (CoreDNS port 53 TCP/UDP)
+- **4 service-specific policies:** Frontend→API, API→Data, Consumer→Data
+
+### Security Boundaries
+
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        subgraph "Presentation Layer"
+            FE[Frontend<br/>nginx:1.25-alpine<br/>UID 1000 non-root<br/>Read-only filesystem]
+        end
+
+        subgraph "Application Layer"
+            API[API<br/>FastAPI distroless<br/>UID 65532 non-root<br/>Drop all capabilities]
+        end
+
+        subgraph "Processing Layer"
+            CONSUMER[Consumer<br/>Python 3.13-slim<br/>UID 1000 non-root<br/>Read-only filesystem]
+        end
+
+        subgraph "Data Layer"
+            REDIS[Redis StatefulSet<br/>Persistent volumes<br/>AOF enabled]
+            PG[PostgreSQL StatefulSet<br/>Persistent volumes<br/>Encrypted at rest]
+        end
+    end
+
+    subgraph "Network Policies"
+        NP1[Default Deny All<br/>voting-frontend]
+        NP2[Default Deny All<br/>voting-api]
+        NP3[Default Deny All<br/>voting-consumer]
+        NP4[Default Deny All<br/>voting-data]
+    end
+
+    subgraph "Observability - Phase 5.3"
+        METRICS[metrics-server<br/>kubectl top<br/>CPU/Memory monitoring]
+    end
+
+    FE ---|Network Policy| NP1
+    API ---|Network Policy| NP2
+    CONSUMER ---|Network Policy| NP3
+    REDIS ---|Network Policy| NP4
+    PG ---|Network Policy| NP4
+
+    API -.->|Metrics| METRICS
+    CONSUMER -.->|Metrics| METRICS
+    FE -.->|Metrics| METRICS
+
+    classDef secure fill:#10b981,stroke:#059669,color:#fff
+    classDef policy fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef obs fill:#f59e0b,stroke:#d97706,color:#fff
+
+    class FE,API,CONSUMER,REDIS,PG secure
+    class NP1,NP2,NP3,NP4 policy
+    class METRICS obs
+```
+
+**Security Features:**
+1. **Non-root execution:** All containers run as unprivileged users (UIDs: 1000, 65532)
+2. **Network isolation:** 12 NetworkPolicy resources enforcing zero-trust
+3. **Container hardening:** Distroless images, dropped capabilities, read-only filesystems
+4. **Input validation:** Pydantic models, SQL parameterization, request size limits
+5. **Vulnerability scanning:** Trivy scans (0 HIGH/CRITICAL in consumer, 7 in API, 18 in frontend)
 
 **Key Design Decisions:**
 1. **4-namespace isolation:** Security boundaries between layers (ADR-0004)
