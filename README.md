@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Phase](https://img.shields.io/badge/phase-5.3_complete-green)
+![Phase](https://img.shields.io/badge/phase-6_complete-green)
 
 Event-driven voting application deployed on Kubernetes with real-time results.
 

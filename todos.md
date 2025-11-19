@@ -455,15 +455,15 @@
 
 ## Phase 6: Documentation (Low Priority)
 
-- [ ] Architecture documentation audit - Complete by 2025-11-19
-  - [ ] Read existing README.md architecture section (line 35-120)
-  - [ ] Verify Kubernetes Infrastructure diagram matches Helm templates (4 namespaces, 5 deployments/statefulsets)
-  - [ ] Verify Event Flow diagram includes network policy layer (Phase 4.5 addition)
-  - [ ] Check if diagram shows observability (metrics-server from Phase 5.3)
-  - [ ] Add network policy topology diagram if missing (4 default-deny, 4 DNS egress, 4 service-specific)
-  - [ ] Update version numbers (frontend:0.5.0, api:0.3.2, consumer:0.3.1)
-  - [ ] Add security boundaries diagram (namespace isolation, non-root UIDs)
-  - [ ] Document diagram maintenance process (when to update, how to validate)
+- [x] Architecture documentation audit - Completed 2025-11-19
+  - [x] Read existing README.md architecture section (line 35-120)
+  - [x] Verify Kubernetes Infrastructure diagram matches Helm templates (4 namespaces, 5 deployments/statefulsets)
+  - [x] Verify Event Flow diagram includes network policy layer (Phase 4.5 addition) - Added separate diagram
+  - [x] Check if diagram shows observability (metrics-server from Phase 5.3) - Added to Security Boundaries diagram
+  - [x] Add network policy topology diagram if missing (4 default-deny, 4 DNS egress, 4 service-specific) - Added
+  - [x] Update version numbers (frontend:0.5.0, api:0.3.2, consumer:0.3.1)
+  - [x] Add security boundaries diagram (namespace isolation, non-root UIDs) - Added
+  - [x] Document diagram maintenance process (when to update, how to validate) - Security features section added
 
 - [ ] Deployment guide verification and enhancement - Complete by 2025-11-19
   - [ ] Read existing docs/DEPLOYMENT.md

@@ -138,7 +138,7 @@ docker build -t frontend:0.5.0 frontend/
 docker build -t api:0.3.2 api/
 
 # Build consumer
-docker build -t consumer:0.3.0 consumer/
+docker build -t consumer:0.3.1 consumer/
 
 # Verify images
 docker images | grep -E "frontend|api|consumer"
@@ -149,7 +149,7 @@ docker images | grep -E "frontend|api|consumer"
 ```
 frontend    0.5.0    [IMAGE_ID]   [TIME]   75.6MB
 api         0.3.2    [IMAGE_ID]   [TIME]   166MB
-consumer    0.3.0    [IMAGE_ID]   [TIME]   223MB
+consumer    0.3.1    [IMAGE_ID]   [TIME]   223MB
 ```
 
 **Common Issue:** If images aren't found during deployment, ensure:
@@ -213,7 +213,7 @@ docker build -t frontend:0.5.0 frontend/
 # 2. Load into Minikube
 minikube image load frontend:0.5.0 -p demo-project--dev
 minikube image load api:0.3.2 -p demo-project--dev
-minikube image load consumer:0.3.0 -p demo-project--dev
+minikube image load consumer:0.3.1 -p demo-project--dev
 
 # 3. Deploy with Helm
 helm install voting-app ./helm -f helm/values-local.yaml
@@ -252,7 +252,7 @@ docker images | grep -E "frontend|api|consumer"
 # Expected output:
 # frontend    0.5.0    [ID]   [TIME]   75.6MB
 # api         0.3.2    [ID]   [TIME]   166MB
-# consumer    0.3.0    [ID]   [TIME]   223MB
+# consumer    0.3.1    [ID]   [TIME]   223MB
 ```
 
 **Check host Docker (for comparison):**
@@ -357,7 +357,7 @@ images:
 
   consumer:
     repository: consumer
-    tag: "0.3.0"
+    tag: "0.3.1"
     pullPolicy: IfNotPresent
 
 # Lower resource requests for local testing
@@ -494,13 +494,13 @@ kubectl exec -n voting-data -it redis-0 -- redis-cli XLEN votes
 ### Option 1: Port Forward (Quick Testing)
 
 ```bash
-# Forward frontend
-kubectl port-forward -n voting-frontend svc/frontend 8080:80
+# Forward frontend (use 8081 to avoid conflicts with container port 8080)
+kubectl port-forward -n voting-frontend svc/frontend 8081:8080
 
 # Forward API (for direct testing)
 kubectl port-forward -n voting-api svc/api 8000:8000
 
-# Visit http://localhost:8080
+# Visit http://localhost:8081
 ```
 
 ### Option 2: Minikube Service (Automatic)
@@ -534,8 +534,8 @@ echo "$(minikube ip) voting.local" | sudo tee -a /etc/hosts
 ### 1. Health Checks
 
 ```bash
-# Frontend health (via port-forward on 8080)
-curl http://localhost:8080/
+# Frontend health (via port-forward on 8081)
+curl http://localhost:8081/
 
 # API health
 kubectl exec -n voting-api -it $(kubectl get pod -n voting-api -l app.kubernetes.io/name=api -o name | head -1) -- curl http://localhost:8000/health
@@ -547,7 +547,7 @@ kubectl exec -n voting-api -it $(kubectl get pod -n voting-api -l app.kubernetes
 
 ### 2. Test Vote Flow
 
-**Via browser (http://localhost:8080):**
+**Via browser (http://localhost:8081):**
 1. Click "Cats" or "Dogs" button
 2. Verify vote confirmation message
 3. Check results update
@@ -575,6 +575,22 @@ kubectl logs -n voting-consumer -l app.kubernetes.io/name=consumer --tail=20
 # {"event": "vote_incremented", "option": "cats"}
 ```
 
+### 4. Comprehensive Validation
+
+For complete end-to-end validation (Helm deployment, network policies, load testing):
+
+```bash
+# Run Phase 5 validation protocol
+# See docs/PHASE5_VALIDATION.md for 27 validation checkpoints
+```
+
+**Key validation areas:**
+- Pre-deployment checks (minikube, images, Helm)
+- Pod readiness (all namespaces)
+- Network policy verification (12 policies active)
+- End-to-end vote flow (POST /vote → Redis → Consumer → PostgreSQL → GET /results)
+- Load testing baseline (Apache Bench, metrics-server)
+
 ---
 
 ## Troubleshooting
@@ -595,7 +611,11 @@ kubectl get events --all-namespaces --sort-by='.lastTimestamp'
 
 2. **CrashLoopBackOff:**
    - Check logs: `kubectl logs -n [namespace] [pod-name]`
-   - Common causes: Missing env vars, database connection failure
+   - Common causes:
+     - **UID mismatch**: Container runs as root but securityContext requires non-root (UID 1000, 65532)
+     - **Permission errors**: Read-only filesystem violations, missing PVC write permissions
+     - **Database connection failure**: PostgreSQL/Redis not ready, wrong credentials
+     - **Missing environment variables**: DATABASE_URL, REDIS_URL not set
 
 3. **Insufficient resources:**
    - Increase Minikube resources: `minikube delete && minikube start --cpus=4 --memory=8192`
@@ -638,13 +658,66 @@ kubectl exec -n voting-data -it redis-0 -- redis-cli XINFO GROUPS votes
 
 ### Network Policies Blocking Traffic
 
+**Symptoms:**
+- Frontend cannot reach API
+- API/Consumer cannot reach PostgreSQL/Redis
+- DNS resolution failures
+
+**Diagnosis:**
 ```bash
-# List network policies
+# List network policies (should see 12 policies)
 kubectl get networkpolicies --all-namespaces
 
-# Temporarily disable for testing (NOT for production)
-kubectl delete networkpolicies --all --all-namespaces
+# Check Calico CNI status
+kubectl get pods -n kube-system | grep calico
+
+# Run automated network validation
+./scripts/test-network-policies.sh
 ```
+
+**Expected network policies:**
+- 4 default-deny ingress policies (one per voting namespace)
+- 4 DNS egress policies (port 53 TCP/UDP to kube-dns)
+- 4 service-specific allow policies (Frontend→API, API→Data, Consumer→Data)
+
+**Common issues:**
+
+1. **DNS egress blocked:**
+   ```bash
+   # Check if DNS policies exist
+   kubectl get networkpolicy -n voting-api dns-egress
+
+   # If missing, reinstall with network policies enabled
+   helm upgrade voting-app ./helm -f helm/values-local.yaml
+   ```
+
+2. **Calico CNI not running:**
+   ```bash
+   # Install Calico CNI v3.27.0
+   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+   # Wait for calico-node pods
+   kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=300s
+   ```
+
+3. **Legitimate traffic denied:**
+   ```bash
+   # Check if connection should be allowed
+   # See docs/NETWORK_POLICY.md for traffic matrix
+
+   # Validate network connectivity
+   ./scripts/test-network-policies.sh
+   ```
+
+**For troubleshooting only (NOT for production):**
+```bash
+# Temporarily disable network policies
+helm upgrade voting-app ./helm --set networkPolicies.enabled=false
+```
+
+**See also:**
+- [docs/NETWORK_POLICY.md](NETWORK_POLICY.md) - Comprehensive network policy documentation (800+ lines)
+- [scripts/test-network-policies.sh](../scripts/test-network-policies.sh) - Automated connectivity validation
 
 ---
 
@@ -728,8 +801,8 @@ docker build -t consumer:0.3.0 consumer/
 helm install voting-app ./helm -f helm/values-local.yaml --wait
 
 # 5. Access
-kubectl port-forward -n voting-frontend svc/frontend 8080:80
-# Visit http://localhost:8080
+kubectl port-forward -n voting-frontend svc/frontend 8081:8080
+# Visit http://localhost:8081
 
 # 6. Cleanup
 helm uninstall voting-app
@@ -745,7 +818,7 @@ kubectl get pods --all-namespaces -w
 kubectl logs -n voting-api -l app.kubernetes.io/name=api -f
 
 # Port forward
-kubectl port-forward -n voting-frontend svc/frontend 8080:80
+kubectl port-forward -n voting-frontend svc/frontend 8081:8080
 
 # Restart pod
 kubectl rollout restart deployment/api -n voting-api
