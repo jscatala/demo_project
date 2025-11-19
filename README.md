@@ -220,6 +220,7 @@ See documentation:
 - [Phase 2 Validation](docs/PHASE2_VALIDATION.md) - Backend validation protocol
 - [Phase 3 Validation](docs/PHASE3_VALIDATION.md) - Frontend validation protocol
 - [Phase 4 Validation](docs/PHASE4_VALIDATION.md) - Security validation checklist
+- [Phase 5 Validation](docs/PHASE5_VALIDATION.md) - Integration testing & load testing validation
 
 **History:**
 - [Session Logs](docs/sessions/) - Development session history (13 sessions)
